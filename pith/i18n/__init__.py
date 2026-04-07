@@ -108,6 +108,7 @@ _STRINGS: dict[str, str] = {
     "init.config_written":       "wrote {path}",
     "init.example_written":      "wrote {path}",
     "init.complete":             "configuration written to pith.config.json",
+    "init.ingest_provider_note": "note: anthropic sends document chunks to Anthropic's API — use ollama to keep all data local",
 
     # init scheduler
     "init.scheduler_service_desc": "PITH git sync",

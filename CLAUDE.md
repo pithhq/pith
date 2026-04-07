@@ -67,7 +67,9 @@ Four independently swappable layers:
                  CLI (power users) — all three simultaneously
 
 Model split (locked):
-  Ingest:  Claude API (claude-sonnet-4-5) — quality matters
+ Ingest:  Ollama + Gemma 4 (default) — local, private
+         Anthropic API (claude-sonnet-4-5-20250929) — opt-in for quality
+         Note: Anthropic ingest sends document chunks to external API
   Query:   Ollama + Gemma 4 — private, zero marginal cost
   Lint:    Ollama + Gemma 4
 

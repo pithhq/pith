@@ -64,7 +64,39 @@ def _page_path_for(source: Path, vault_path: Path) -> Path:
     """Derive the wiki page path from the source file name."""
     return vault_path / f"{source.stem}.md"
 
+async def _call_ollama(
+    chunk: Chunk,
+    model: str,
+    base_url: str,
+) -> str:
+    """Send a single chunk to the Ollama chat API.
 
+    Args:
+        chunk:    The text chunk to compile.
+        model:    Model identifier (e.g. gemma4:latest).
+        base_url: Ollama base URL.
+
+    Returns:
+        The assistant's markdown response text.
+
+    Raises:
+        httpx.HTTPStatusError: On non-2xx responses.
+    """
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        response = await client.post(
+            f"{base_url}/api/chat",
+            json={
+                "model": model,
+                "stream": False,
+                "messages": [
+                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "user", "content": chunk.text},
+                ],
+            },
+        )
+        response.raise_for_status()
+        data = response.json()
+        return data["message"]["content"]
 async def _call_anthropic(
     chunk: Chunk,
     model: str,
@@ -131,8 +163,14 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
         overlap_tokens=config.ingest.overlap_tokens,
     )
 
-    api_key = config.providers.anthropic.resolve_api_key()
+    
     model = config.models.ingest.model
+    provider = config.models.ingest.provider
+    api_key = (
+    config.providers.anthropic.resolve_api_key()
+    if provider.value == "anthropic"
+    else None
+)
 
     sections: list[str] = []
     conflicts = 0
@@ -141,7 +179,11 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
     for chunk in chunks:
         info(t("ingest.chunk_progress", current=chunk.index + 1, total=total))
         try:
-            section_md = await _call_anthropic(chunk, model, api_key)
+            if provider.value == "anthropic":
+                section_md = await _call_anthropic(chunk, model, api_key)
+            else:
+                section_md = await _call_ollama(chunk, model, config.providers.ollama.base_url)
+    
             sections.append(section_md)
         except httpx.HTTPStatusError as exc:
             error(t("ingest.api_error", index=chunk.index, detail=str(exc)))

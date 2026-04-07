@@ -56,9 +56,10 @@ def _prompt_mixed_script() -> bool:
 
 def _prompt_ingest_provider() -> ModelProvider:
     """Prompt for ingest model provider."""
+    output.info(t("init.ingest_provider_note"))
     raw = typer.prompt(
         t("init.prompt_ingest_provider"),
-        default="anthropic",
+        default="ollama",
     ).strip().lower()
     if raw not in ("anthropic", "ollama"):
         output.error(t("init.invalid_provider", value=raw))
@@ -68,13 +69,13 @@ def _prompt_ingest_provider() -> ModelProvider:
 
 def _prompt_ingest_model(provider: ModelProvider) -> str:
     """Prompt for ingest model name."""
-    default = "claude-sonnet-4-5" if provider == ModelProvider.anthropic else "gemma4"
+    default = "claude-sonnet-4-5-20250929" if provider == ModelProvider.anthropic else "gemma4:latest"
     return typer.prompt(t("init.prompt_ingest_model"), default=default).strip()
 
 
 def _prompt_query_lint_model() -> str:
     """Prompt for query/lint model name (always Ollama)."""
-    return typer.prompt(t("init.prompt_query_lint_model"), default="gemma4").strip()
+    return typer.prompt(t("init.prompt_query_lint_model"), default="gemma4:latest").strip()
 
 
 def _prompt_ollama_url() -> str:
