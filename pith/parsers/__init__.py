@@ -17,6 +17,9 @@ _DISPATCH: dict[str, str] = {
     ".docx": "docx",
     ".txt": "text",
     ".md": "text",
+    ".xlsx": "xlsx",
+    ".csv": "csv",
+    ".pptx": "pptx",
 }
 
 
@@ -47,6 +50,15 @@ def parse(path: Path) -> ParsedDocument:
     elif parser_key == "docx":
         from pith.parsers.docx import parse_docx
         return parse_docx(path)
+    elif parser_key == "xlsx":
+        from pith.parsers.xlsx import parse_xlsx
+        return parse_xlsx(path)
+    elif parser_key == "csv":
+        from pith.parsers.csv import parse_csv
+        return parse_csv(path)
+    elif parser_key == "pptx":
+        from pith.parsers.pptx import parse_pptx
+        return parse_pptx(path)
     else:
         from pith.parsers.text import parse_text
         return parse_text(path)

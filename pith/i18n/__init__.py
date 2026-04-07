@@ -57,10 +57,18 @@ _STRINGS: dict[str, str] = {
     "parser.pdf_read_error":     "failed to read PDF: {detail}",
     "parser.docx_read_error":    "failed to read DOCX: {detail}",
     "parser.text_read_error":    "failed to read text file: {detail}",
+    "parser.xlsx_read_error":    "failed to read Excel file: {detail}",
+    "parser.xlsx_empty":         "no non-empty sheets in Excel file: {path}",
+    "parser.csv_read_error":     "failed to read CSV file: {detail}",
+    "parser.pptx_read_error":    "failed to read PowerPoint file: {detail}",
+    "parser.pptx_slide_fallback":"Slide {n}",
+    "parsers.ocr_not_available": "pytesseract is not installed — OCR fallback unavailable for scanned pages",
 
     # schema
     "schema.not_found":          "schema not found: {name}",
     "schema.version_mismatch":   "schema version mismatch: expected {expected}, got {got}",
+    "schema.validation_error":   "schema {name} validation failed: {detail}",
+    "schema.missing_yaml":       "schema.yaml not found at {path}",
 
     # sync
     "sync.no_remote":            "no remote configured — skipping push",

@@ -17,6 +17,7 @@ from pith.i18n import t
 from pith.ingest.chunker import Chunk, chunk_document
 from pith.output import error, info, success, summary
 from pith.parsers import parse
+from pith.schema import SchemaPack, load_schema
 
 _SYSTEM_PROMPT = (
     "You are a knowledge compiler. Convert the following document chunk "
@@ -41,23 +42,43 @@ class IngestResult:
     conflicts: int
 
 
+def _build_system_prompt(schema: SchemaPack | None) -> str:
+    """Build the full system prompt, appending schema instructions if present."""
+    if schema and schema.agent_instructions:
+        return _SYSTEM_PROMPT + "\n\n" + schema.agent_instructions
+    return _SYSTEM_PROMPT
+
+
+def _infer_entity_type(
+    schema: SchemaPack | None,
+) -> str | None:
+    """Return a single entity type if the schema defines exactly one."""
+    if schema and len(schema.entities) == 1:
+        return next(iter(schema.entities))
+    return None
+
+
 def _build_frontmatter(
     title: str,
     source: Path,
     schema: str | None,
+    entity_type: str | None = None,
 ) -> str:
     """Render YAML frontmatter for a wiki page."""
     now = datetime.now(timezone.utc).isoformat()
     schema_value = schema if schema else "null"
-    return (
-        "---\n"
-        f"title: {title}\n"
-        f"source: {source}\n"
-        f"ingested_at: {now}\n"
-        f"schema: {schema_value}\n"
-        "references_legislation: []\n"
-        "---\n"
-    )
+    lines = [
+        "---",
+        f"title: {title}",
+        f"source: {source}",
+        f"ingested_at: {now}",
+        f"schema: {schema_value}",
+    ]
+    if entity_type:
+        lines.append(f"entity_type: {entity_type}")
+    lines.append("references_legislation: []")
+    lines.append("---")
+    return "\n".join(lines) + "\n"
 
 
 def _page_path_for(source: Path, vault_path: Path) -> Path:
@@ -68,13 +89,15 @@ async def _call_ollama(
     chunk: Chunk,
     model: str,
     base_url: str,
+    system_prompt: str = _SYSTEM_PROMPT,
 ) -> str:
     """Send a single chunk to the Ollama chat API.
 
     Args:
-        chunk:    The text chunk to compile.
-        model:    Model identifier (e.g. gemma4:latest).
-        base_url: Ollama base URL.
+        chunk:         The text chunk to compile.
+        model:         Model identifier (e.g. gemma4:latest).
+        base_url:      Ollama base URL.
+        system_prompt: System prompt including any schema instructions.
 
     Returns:
         The assistant's markdown response text.
@@ -89,7 +112,7 @@ async def _call_ollama(
                 "model": model,
                 "stream": False,
                 "messages": [
-                    {"role": "system", "content": _SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": chunk.text},
                 ],
             },
@@ -101,13 +124,15 @@ async def _call_anthropic(
     chunk: Chunk,
     model: str,
     api_key: str,
+    system_prompt: str = _SYSTEM_PROMPT,
 ) -> str:
     """Send a single chunk to the Anthropic Messages API.
 
     Args:
-        chunk: The text chunk to compile.
-        model: Model identifier (e.g. claude-sonnet-4-5).
-        api_key: Resolved API key.
+        chunk:         The text chunk to compile.
+        model:         Model identifier (e.g. claude-sonnet-4-5).
+        api_key:       Resolved API key.
+        system_prompt: System prompt including any schema instructions.
 
     Returns:
         The assistant's markdown response text.
@@ -126,7 +151,7 @@ async def _call_anthropic(
             json={
                 "model": model,
                 "max_tokens": 4096,
-                "system": _SYSTEM_PROMPT,
+                "system": system_prompt,
                 "messages": [
                     {"role": "user", "content": chunk.text},
                 ],
@@ -163,14 +188,21 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
         overlap_tokens=config.ingest.overlap_tokens,
     )
 
-    
+    # Load schema pack if configured.
+    schema_pack: SchemaPack | None = None
+    if config.vault.schema_:
+        schema_pack = load_schema(config.vault.schema_)
+
+    system_prompt = _build_system_prompt(schema_pack)
+    entity_type = _infer_entity_type(schema_pack)
+
     model = config.models.ingest.model
     provider = config.models.ingest.provider
     api_key = (
-    config.providers.anthropic.resolve_api_key()
-    if provider.value == "anthropic"
-    else None
-)
+        config.providers.anthropic.resolve_api_key()
+        if provider.value == "anthropic"
+        else None
+    )
 
     sections: list[str] = []
     conflicts = 0
@@ -180,10 +212,14 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
         info(t("ingest.chunk_progress", current=chunk.index + 1, total=total))
         try:
             if provider.value == "anthropic":
-                section_md = await _call_anthropic(chunk, model, api_key)
+                section_md = await _call_anthropic(
+                    chunk, model, api_key, system_prompt,
+                )
             else:
-                section_md = await _call_ollama(chunk, model, config.providers.ollama.base_url)
-    
+                section_md = await _call_ollama(
+                    chunk, model, config.providers.ollama.base_url,
+                    system_prompt,
+                )
             sections.append(section_md)
         except httpx.HTTPStatusError as exc:
             error(t("ingest.api_error", index=chunk.index, detail=str(exc)))
@@ -194,7 +230,9 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
     existed = page_path.exists()
 
     schema_name = config.vault.schema_
-    frontmatter = _build_frontmatter(doc.title, path, schema_name)
+    frontmatter = _build_frontmatter(
+        doc.title, path, schema_name, entity_type,
+    )
     body = "\n\n".join(sections)
     page_content = f"{frontmatter}\n{body}\n"
 
