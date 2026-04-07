@@ -71,10 +71,53 @@ _STRINGS: dict[str, str] = {
     "lint.contradictions":       "{n} contradictions detected",
     "lint.stale_references":     "{n} stale legislation references",
     "lint.clean":                "no issues found",
+    "lint.orphan_detail":        "  orphan: {path}",
+    "lint.contradiction_detail": "  contradiction: {a} <-> {b}: {detail}",
+    "lint.stale_detail":         "  stale: {path}",
+    "lint.running":              "running lint checks",
+    "lint.skip_contradictions":  "skipping contradictions check: could not reach Ollama",
+    "lint.no_vault":             "no vault path configured",
+
+    # query
+    "query.system_prompt":       "You are a knowledge assistant. Answer using only the following wiki pages as your source.\n\n{context}",
+    "query.ollama_unreachable":  "could not reach Ollama at {url}: {detail}",
+    "query.ollama_error":        "Ollama returned status {status}: {detail}",
+    "query.no_pages":            "no wiki pages found in vault: {path}",
 
     # license
     "license.invalid":           "license invalid or expired",
     "license.activated":         "license activated on this machine",
+
+    # init wizard
+    "init.welcome":              "PITH setup wizard",
+    "init.prompt_vault_path":    "vault path (absolute or relative)",
+    "init.confirm_create_vault": "directory {path} does not exist — create it?",
+    "init.vault_created":        "created vault directory: {path}",
+    "init.vault_not_created":    "vault directory not created — aborting",
+    "init.prompt_schema":        "schema name (leave blank for none)",
+    "init.prompt_language":      "language code",
+    "init.prompt_mixed_script":  "enable mixed script support?",
+    "init.prompt_ingest_provider": "ingest model provider (anthropic/ollama)",
+    "init.invalid_provider":     "invalid provider: {value} — must be anthropic or ollama",
+    "init.prompt_ingest_model":  "ingest model name",
+    "init.prompt_query_lint_model": "query/lint model name (Ollama)",
+    "init.prompt_ollama_url":    "Ollama base URL",
+    "init.prompt_api_key_env":   "Anthropic API key env var name",
+    "init.prompt_git_remote":    "git remote URL (leave blank for none)",
+    "init.prompt_sync_interval": "sync interval in minutes",
+    "init.config_written":       "wrote {path}",
+    "init.example_written":      "wrote {path}",
+    "init.complete":             "configuration written to pith.config.json",
+
+    # init scheduler
+    "init.scheduler_service_desc": "PITH git sync",
+    "init.scheduler_timer_desc":   "PITH git sync timer",
+    "init.scheduler_written":      "wrote scheduler file: {path}",
+    "init.scheduler_load_systemd": "run: systemctl --user enable --now pith-sync.timer",
+    "init.scheduler_load_launchd": "run: launchctl load ~/Library/LaunchAgents/com.pithhq.sync.plist",
+    "init.scheduler_load_windows": "run: schtasks /Create /XML pith-sync.xml /TN PithSync",
+    "init.scheduler_no_appdata":   "APPDATA not set — cannot write scheduler file",
+    "init.scheduler_unsupported":  "unsupported OS for scheduler: {os}",
 }
 
 

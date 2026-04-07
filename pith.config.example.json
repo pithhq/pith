@@ -13,11 +13,11 @@
     },
     "query": {
       "provider": "ollama",
-      "model": "gemma3"
+      "model": "gemma4"
     },
     "lint": {
       "provider": "ollama",
-      "model": "gemma3"
+      "model": "gemma4"
     }
   },
   "providers": {

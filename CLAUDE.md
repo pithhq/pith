@@ -187,7 +187,7 @@ Trademark:     PITH — filing USPTO Classes 9 + 42
 
 Schema name:   law-firm-sr
 Language:      Serbian, Latin + Cyrillic (mixed_script: true)
-Client:        Friend's law firm in Belgrade (beta tester)
+Client:        Law firm, Belgrade (beta tester)
 Entities:      client, matter, precedent, doctrine
 Key feature:   references_legislation frontmatter field
                enables staleness tracking when laws update
