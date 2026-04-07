@@ -93,8 +93,11 @@ _STRINGS: dict[str, str] = {
     "query.no_pages":            "no wiki pages found in vault: {path}",
 
     # license
+    "license.activating":        "activating license",
+    "license.activated":         "license activated — tier: {tier}",
+    "license.invalid_key":       "invalid license key format",
     "license.invalid":           "license invalid or expired",
-    "license.activated":         "license activated on this machine",
+    "license.machine_mismatch":  "license is registered to a different machine",
 
     # init wizard
     "init.welcome":              "PITH setup wizard",
@@ -127,6 +130,11 @@ _STRINGS: dict[str, str] = {
     "init.scheduler_load_windows": "run: schtasks /Create /XML pith-sync.xml /TN PithSync",
     "init.scheduler_no_appdata":   "APPDATA not set — cannot write scheduler file",
     "init.scheduler_unsupported":  "unsupported OS for scheduler: {os}",
+
+    # export
+    "export.start":              "exporting wiki to {fmt}",
+    "export.complete":           "export written to {path}",
+    "export.no_pages":           "no wiki pages found in vault",
 }
 
 

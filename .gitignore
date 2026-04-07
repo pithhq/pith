@@ -4,7 +4,9 @@ __pycache__/
 *.egg-info/
 *.egg
 dist/
-build/
+build/__pycache__/
+build/*.spec.bak
+build/vendor/
 .venv/
 venv/
 *.whl
@@ -26,13 +28,28 @@ pith.config.json
 .coverage
 htmlcov/
 
+vault/
+*.pithhq-vault/
+
 # Tauri / Rust
 target/
 node_modules/
 
-# PyInstaller
-*.spec
+# PyInstaller (build/pith.spec is tracked)
+*.spec.bak
 
 # OS
 .DS_Store
 Thumbs.db
+
+
+# Tauri
+src-tauri/target/
+src-tauri/binaries/pith
+src-tauri/binaries/pith.exe
+
+# License file — never committed
+.pithhq/
+
+# Tesseract env (developer-specific)
+.env.local

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicedoc/schemas/main/tauri-conf-v2.json",
+  "productName": "PITH",
+  "version": "0.1.0",
+  "identifier": "com.pithhq.pith",
+  "build": {
+    "frontendDist": "../src",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "title": "PITH",
+    "windows": [
+      {
+        "title": "PITH",
+        "width": 1024,
+        "height": 768,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ]
+  },
+  "bundle": {
+    "active": true,
+    "icon": ["icons/icon.png"],
+    "externalBin": ["binaries/pith"],
+    "targets": "all"
+  },
+  "plugins": {
+    "shell": {
+      "sidecar": true
+    }
+  }
+}

@@ -1,0 +1,77 @@
+:root {
+  --obsidian: #111110;
+  --surface: #1C1B18;
+  --parchment: #F7F6F2;
+  --copper: #B07858;
+  --sage: #5C8A5A;
+  --stone: #E0DDD0;
+
+  --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--obsidian);
+  color: var(--stone);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.5rem 2rem 0.5rem;
+}
+
+.wordmark {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--parchment);
+  letter-spacing: 0.15em;
+}
+
+.tagline {
+  font-size: 0.8rem;
+  color: var(--stone);
+  opacity: 0.6;
+}
+
+nav {
+  display: flex;
+  gap: 0;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--surface);
+}
+
+.nav-item {
+  padding: 0.75rem 1.25rem;
+  color: var(--stone);
+  text-decoration: none;
+  font-size: 0.85rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.nav-item:hover {
+  color: var(--parchment);
+}
+
+.nav-item.active {
+  color: var(--copper);
+  border-bottom-color: var(--copper);
+}
+
+main {
+  flex: 1;
+  padding: 2rem;
+}

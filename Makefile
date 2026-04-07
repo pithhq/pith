@@ -1,4 +1,4 @@
-.PHONY: install build test lint clean package-linux package-windows package-macos
+.PHONY: install build test lint clean build-linux build-mac build-windows appimage
 
 install:
 	pip install -e ".[dev]"
@@ -14,14 +14,17 @@ lint:
 	black --check pith/ tests/
 
 clean:
-	rm -rf dist/ build/ *.egg-info .pytest_cache htmlcov/
+	rm -rf dist/ *.egg-info .pytest_cache htmlcov/
 	find . -type d -name __pycache__ -exec rm -rf {} +
 
-package-linux:
-	pyinstaller --name pith --onefile pith/cli/__init__.py
+build-linux:
+	bash build/build.sh
 
-package-windows:
-	pyinstaller --name pith --onefile pith/cli/__init__.py
+build-mac:
+	bash build/build.sh
 
-package-macos:
-	pyinstaller --name pith --onefile pith/cli/__init__.py
+build-windows:
+	powershell -ExecutionPolicy Bypass -File build/build.ps1
+
+appimage: build-linux
+	bash build/make-appimage.sh

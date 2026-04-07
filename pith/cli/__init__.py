@@ -122,6 +122,64 @@ def init() -> None:
 
 
 @app.command()
+def activate(
+    key: str = typer.Argument(..., help="License key (pithhq_...)."),
+) -> None:
+    """Activate a PITH license on this machine."""
+    from pith.license import activate as activate_license
+
+    output.info(t("license.activating"))
+
+    try:
+        info = activate_license(key)
+    except ValueError:
+        output.error(t("license.invalid_key"))
+        raise typer.Exit(code=5)
+    except Exception:  # noqa: BLE001
+        output.error(t("license.invalid"))
+        raise typer.Exit(code=5)
+
+    output.success(t("license.activated", tier=info.tier))
+
+
+@app.command()
+def export(
+    fmt: str = typer.Option(
+        "pdf",
+        "--format",
+        "-f",
+        help="Export format: pdf, docx, csv.",
+    ),
+    output_path: Optional[Path] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output file path.",
+    ),
+    config: Optional[Path] = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Path to pith.config.json.",
+    ),
+) -> None:
+    """Export wiki to PDF, DOCX, or CSV."""
+    from pith.export import ExportFormat, export_wiki
+
+    try:
+        export_fmt = ExportFormat(fmt)
+    except ValueError:
+        output.error(t("config.invalid", detail=f"unknown export format: {fmt}"))
+        raise typer.Exit(code=1)
+
+    config_path = config if config is not None else Path("pith.config.json")
+    cfg = _load_config(config_path)
+
+    resolved_output = output_path if output_path is not None else Path(f"pith-export.{export_fmt.value}")
+    export_wiki(cfg, export_fmt, resolved_output)
+
+
+@app.command()
 def version() -> None:
     """Print the PITH version."""
     ver = importlib.metadata.version("pithhq")
