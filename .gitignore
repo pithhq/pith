@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+venv/
+*.whl
+
+# User config (contains local paths — not tracked)
+pith.config.json
+
+# Environment variables (contains secrets)
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Tauri / Rust
+target/
+node_modules/
+
+# PyInstaller
+*.spec
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,63 @@
+{
+  "vault": {
+    "path": null,
+    "schema": null,
+    "schema_version": null,
+    "language": null,
+    "mixed_script": false
+  },
+  "models": {
+    "ingest": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20241022"
+    },
+    "query": {
+      "provider": "ollama",
+      "model": "gemma3"
+    },
+    "lint": {
+      "provider": "ollama",
+      "model": "gemma3"
+    }
+  },
+  "providers": {
+    "anthropic": {
+      "api_key_env": "ANTHROPIC_API_KEY"
+    },
+    "ollama": {
+      "base_url": "http://localhost:11434"
+    }
+  },
+  "ingest": {
+    "chunk_size_tokens": 2048,
+    "overlap_tokens": 128,
+    "formats": ["pdf", "docx", "txt", "md", "xlsx", "csv", "pptx"]
+  },
+  "sync": {
+    "remote": null,
+    "interval_minutes": 30,
+    "active_hours": {
+      "start": "08:00",
+      "end": "20:00"
+    }
+  },
+  "lint": {
+    "schedule": "weekly",
+    "day": "monday",
+    "time": "09:00",
+    "checks": {
+      "orphans": true,
+      "contradictions": true,
+      "stale_references": true
+    }
+  },
+  "privacy": {
+    "telemetry": false,
+    "update_check": true
+  },
+  "license": {},
+  "ui": {
+    "obsidian_vault_path": null,
+    "openwebui_port": 3000
+  }
+}
