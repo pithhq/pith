@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,14 +7,13 @@ name = "pithhq"
 version = "0.1.0"
 description = "Your knowledge, compiled."
 readme = "README.md"
-license = "Apache-2.0"
+license = {text = "Apache-2.0"}
 requires-python = ">=3.10"
 authors = [{ name = "PITH", email = "hello@pithhq.com" }]
 keywords = ["knowledge", "wiki", "documents", "ingest"]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: Console",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

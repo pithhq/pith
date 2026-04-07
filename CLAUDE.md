@@ -210,7 +210,7 @@ Phase 2 (4 weeks):
   `pith init` CLI wizard.
   Deliverable: full CLI working end-to-end.
 
-Phase 3 (3 weeks, post StateMesh Pro submission):
+Phase 3 (3 weeks):
   Excel/CSV, PPTX parsers, scanned PDF OCR (pytesseract),
   law-firm-sr schema v1 tested on real documents.
   Deliverable: law firm schema working on real legal docs.

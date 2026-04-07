@@ -9,7 +9,7 @@
   "models": {
     "ingest": {
       "provider": "anthropic",
-      "model": "claude-sonnet-4-5-20241022"
+      "model": "claude-sonnet-4-5-20250929"
     },
     "query": {
       "provider": "ollama",
