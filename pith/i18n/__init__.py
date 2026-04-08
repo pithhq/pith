@@ -23,7 +23,7 @@ _DOMAIN = "pith"
 
 # Attempt to load a compiled translation catalogue.
 # Falls back to the identity function if none is found.
-from collections.abc import Callable
+
 _gettext: Callable[[str], str]
 try:
     _lang = os.environ.get("PITH_LANG") or os.environ.get("LANG", "en")[:2]
