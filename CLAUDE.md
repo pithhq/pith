@@ -1,261 +1,215 @@
 # PITH — Development Context
 
-## What PITH Is
+**PITH** is a self-contained, locally deployable knowledge intelligence system. Raw documents go in. A compiled, cross-referenced, growing wiki comes out. Knowledge compounds over time. Data never leaves the client's infrastructure.
 
-PITH is a self-contained, locally deployable knowledge intelligence
-system. Raw documents go in. A compiled, cross-referenced, growing
-wiki comes out. Knowledge compounds over time. Data never leaves
-the client's infrastructure.
+Core insight: PITH is NOT RAG. The wiki is a persistent compiled artifact, not a retrieval index. Every ingest makes it richer. The LLM does the bookkeeping humans abandon.
 
-Core distinction: PITH is NOT a RAG system. The wiki is a
-persistent compiled artifact, not a retrieval index. Every ingest
-makes it richer. Ask again in six months — a RAG system's knowledge
-base is identical. PITH's has been growing.
+---
 
-## Brand
+## Project Context
 
-Name: PITH (always all caps)
-Tagline: "Your knowledge, compiled."
-Domain: pithhq.com
-Email: hello@pithhq.com
-GitHub: github.com/pithhq
-PyPI: pithhq
+```
+Project Name:     PITH
+Type:             desktop CLI tool + Tauri GUI
+Track:            software
+Primary Stack:    Python 3.12+, Typer, Pydantic, PyInstaller, Tauri (Rust + Python sidecar)
+Target Platform:  Windows (.exe), macOS (.dmg), Linux (AppImage)
+Current Phase:    Phase 4 complete — production ready
+Repository:       github.com/pithhq/pith
+Domain:           pithhq.com
+Email:            hello@pithhq.com
+License:          Apache 2.0 (engine) + Proprietary (schema packs, GUI)
+```
 
-Never write: "Pith", "pith", "PithHQ", "Pith HQ"
-Domains and handles use lowercase: pithhq.com, @pithhq
+---
 
-### Colours
-Obsidian:   #111110  — primary background
-Surface:    #1C1B18  — secondary background
-Parchment:  #F7F6F2  — light background
-Copper:     #B07858  — accent (warnings, tags, highlights)
-Sage:       #5C8A5A  — success states
-Stone:      #E0DDD0  — UI elements, tags
+## Architecture (Locked)
 
-### Voice
-Precise. Honest. Direct. Calm. No filler words.
-No exclamation marks. No AI hype language.
-CLI output: terse, factual, no emoji.
+**Four modular layers:**
 
-## Technical Stack (locked)
+1. **Storage**: local filesystem (default), NAS mount, cloud-synced folder
+2. **Model provider**: Ollama (local queries), Anthropic API (ingest synthesis), OpenAI-compatible
+3. **Schema**: vertical-specific YAML + AGENT.md pairs — the extensible knowledge layer
+4. **Interface**: Obsidian (wiki browsing), Open WebUI (team queries), CLI (power users)
 
-Language:           Python
-CLI framework:      typer
-Config validation:  pydantic + pydantic-settings
-File parsers:
-  PDF (text):       pdfplumber
-  PDF (scanned):    pytesseract (v1.1)
-  DOCX:             python-docx
-  Excel/CSV:        openpyxl + pandas
-  PPTX:             python-pptx
+**Model split (locked):**
+- Ingest/synthesis: Claude API — quality matters here
+- Query (day-to-day): Ollama + Gemma 4 — private, zero marginal cost
+- Lint: Ollama + Gemma 4
+
+---
+
+## Tech Stack (Locked)
+
+```
+Language:           Python 3.12+
+CLI framework:      Typer
+Schema validation:  Pydantic + pydantic-settings
+Config validation:  Pydantic
+File parsers:       pdfplumber (PDF text)
+                    python-docx (DOCX)
+                    openpyxl / pandas (Excel/CSV)
+                    python-pptx (PPTX)
+                    pytesseract (scanned PDF OCR — v1.1)
 Git operations:     gitpython
-HTTP:               httpx (async)
-CLI packaging:      pyinstaller
-GUI framework:      Tauri (Rust runtime + Python sidecar)
-GUI ships:          v1.0 alongside CLI (not a later addition)
+API calls:          httpx (async)
+Packaging:          PyInstaller (CLI binary)
+GUI wrapper:        Tauri (Rust + Python sidecar)
+Testing:            pytest + pytest-cov
+Formatting:         Black
+Linting:            ruff
+Type checking:      mypy
+```
 
-## Architecture (locked)
+---
 
-Four independently swappable layers:
+## CLI Commands (Stable — Phase 4)
 
-1. Storage     — local filesystem (default), NAS mount,
-                 cloud-synced folder
-2. Model       — Ollama (local), Anthropic API,
-                 OpenAI-compatible endpoint
-3. Schema      — vertical-specific YAML + AGENT.md pairs
-4. Interface   — Obsidian (wiki), Open WebUI (team queries),
-                 CLI (power users) — all three simultaneously
+```bash
+pith init          # Guided setup wizard — creates pith.config.json
+pith ingest [file] # Ingest one or more source files into wiki
+pith query [text]  # Query the wiki using local model
+pith lint          # Health check: orphans, contradictions, stale refs
+pith sync          # Manual git commit + push
+pith export        # Export wiki to PDF/DOCX/CSV
+pith activate [key]# License activation (Lemon Squeezy)
+```
 
-Model split (locked):
- Ingest:  Ollama + Gemma 4 (default) — local, private
-         Anthropic API (claude-sonnet-4-5-20250929) — opt-in for quality
-         Note: Anthropic ingest sends document chunks to external API
-  Query:   Ollama + Gemma 4 — private, zero marginal cost
-  Lint:    Ollama + Gemma 4
+All command signatures are stable and locked. Do not change them.
 
-## CLI Commands
+---
 
-pith init          — guided setup wizard
-pith ingest [file] — ingest source files into wiki
-pith query [text]  — query wiki using local model
-pith lint          — health check: orphans, contradictions,
-                     stale legislation references
-pith sync          — manual git commit + push
-pith export        — export wiki to PDF/DOCX/CSV
-pith activate [key]— offline license activation
+## Open Core Boundary (Locked)
 
-## Config Format (locked — treat as public API)
+**Apache 2.0 (open source):**
+- CLI engine (all commands)
+- All file format parsers
+- Git sync layer
+- Model provider abstraction
+- Schema loader and validator
+- AGENT.md template system
+- Frontmatter tracking system
 
-File: pith.config.json
-Breaking changes require migration scripts.
-Adding fields with defaults = non-breaking.
-Removing or renaming fields = breaking.
+**Proprietary (paid):**
+- Vertical schema packs (law-firm-sr, writing-agency, etc.)
+- GUI installer and setup wizard
+- Obsidian configuration pack
+- Priority support
 
-API keys NEVER stored in config — environment variables only.
+Schema packs live in a **separate private repository** (`pithhq/pith-schemas`). Never commit schema pack files to the open source repo. Reference via git submodule or package install in the product build.
 
-Key sections:
-  vault:    path, schema name + version, language settings
-  models:   provider + model per operation (ingest/query/lint)
-  providers:api_key_env references, Ollama base_url
-  ingest:   chunk_size_tokens, overlap, format support
-  sync:     remote type, interval, active hours
-  lint:     schedule, day, time, check toggles
-  privacy:  telemetry (false), update_check (true)
-  license:  written by activation — never by user
-  ui:       Obsidian path, Open WebUI port
+---
 
-## Schema Format (locked)
+## Config Format (pith.config.json)
 
-Each schema pack: schemas/[vertical-name]/
-  schema.yaml  — entities, cross-references, lint rules,
-                 ingest hints, references_legislation tracking
-  AGENT.md     — LLM ingest instructions (not CLAUDE.md —
-                 that name is Anthropic-specific)
-  seeds/       — 3-5 example wiki pages shipped with schema
-  README.md    — domain-language guide for practitioners,
-                 not developers
+```json
+{
+  "version": "1.0",
+  "wiki": {
+    "root": "./wiki",
+    "schema": "law-firm-sr"
+  },
+  "model": {
+    "ingest": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6"
+    },
+    "query": {
+      "provider": "ollama",
+      "model": "gemma4",
+      "base_url": "http://localhost:11434"
+    }
+  },
+  "sync": {
+    "enabled": true,
+    "remote": "origin",
+    "branch": "main",
+    "auto_push": false
+  },
+  "privacy": {
+    "telemetry": false,
+    "update_check": true
+  }
+}
+```
 
-Schema packs live in a SEPARATE PRIVATE REPO from the
-open source engine. Referenced via submodule or separate
-package install in the product build.
+---
 
-## Open Core Boundary (locked)
+## Schema Format (Locked)
 
-Apache 2.0 (open source — public repo):
-  - CLI engine (all commands)
-  - All file format parsers
-  - Git sync layer
-  - Model provider abstraction
-  - Schema loader and validator
-  - AGENT.md template system
-  - Frontmatter tracking system
+Each schema pack lives at: `schemas/[vertical-name]/`
+```
+schema.yaml    — entity definitions, cross-reference rules, lint rules, staleness windows
+AGENT.md       — LLM instruction layer for ingest pipeline
+seeds/         — 3-5 example wiki pages shipped with schema
+README.md      — human-readable guide for this vertical
+```
 
-Proprietary (paid product — private repo):
-  - Vertical schema packs
-  - GUI installer and setup wizard
-  - Obsidian configuration pack
-  - Priority support tier
+---
 
-The schema FORMAT (schema.yaml structure) is documented
-and stable — anyone can write personal schemas. We only
-sell pre-built, domain-researched, tested vertical packs.
+## Privacy Constraints (Non-Negotiable)
 
-## Platform Support (locked — all from v1.0)
+- No telemetry (zero — never send usage data)
+- No account required (license validation is offline after first activation)
+- API keys in environment variables only — never in config file
+- Update check: single GET to `api.pithhq.com/version`, no user identifier sent, opt-out via config
+- License validation: offline after first activation (machine fingerprint hash)
 
-Windows:  native .exe (pyinstaller + bundled git)
-macOS:    .dmg
-Linux:    AppImage
+These constraints are the product's identity. Never compromise them for convenience.
 
-Path handling: pathlib.Path EVERYWHERE.
-String concatenation with / or \ is forbidden.
+---
 
-OS schedulers (git auto-sync):
-  Linux:   systemd timer
-  macOS:   launchd plist
-  Windows: Task Scheduler
-All three generated automatically by `pith init`.
+## Coding Standards (Locked)
 
-Windows code signing: Sectigo certificate required
-before launch to prevent Defender false positives.
+- `pathlib.Path` for ALL file paths — never string concatenation
+- No hardcoded strings — i18n string table from day one (gettext)
+- Pydantic validation on every config load — fail fast with clear error
+- Tests required for all parsers — no untested file format code ships
+- Type hints throughout — mypy must pass with no errors
+- Black formatting, ruff linting — enforced in CI
+- Commits: conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `refactor:`)
 
-## Privacy Constraints (non-negotiable)
+---
 
-- No telemetry whatsoever
-- No account required to use the product
-- API keys in environment variables only — never config file
-- License validation offline after first activation
-- Update check: single GET to api.pithhq.com/version,
-  no user identifier sent, opt-out via config flag
+## Platform Support
+
+- Windows: `.exe` native (PyInstaller + git bundled)
+- macOS: `.dmg` (PyInstaller + code signing via Sectigo)
+- Linux: `AppImage`
+- OS scheduler: systemd (Linux), launchd (macOS), Task Scheduler (Windows)
+
+---
 
 ## License System
 
-Provider:    Lemon Squeezy (Merchant of Record — handles
-             VAT, sales tax globally)
-Validation:  offline after first activation via signed
-             license file + machine fingerprint (hashed
-             hardware ID)
-Tiers:       Personal (1 machine)
-             Team (5 machines)
-             Enterprise (unlimited)
+- Provider: Lemon Squeezy (Merchant of Record — handles VAT globally)
+- Tiers: Personal (1 machine), Team (5 machines), Enterprise (unlimited)
+- Validation: offline after first activation
+- Machine fingerprint: hashed hardware ID (never sent externally after activation)
 
-## Business Context
+---
 
-Legal entity:  Wyoming LLC
-Payment:       Lemon Squeezy
-Trademark:     PITH — filing USPTO Classes 9 + 42
-               EUIPO within 6 months of USPTO filing date
+## Current Verticals
 
-## First Vertical: Law Firm (Serbian)
+**law-firm-sr** (v1 — complete)
+- Serbian law firm schema
+- Languages: Serbian Latin + Cyrillic
+- Entities: client, matter, precedent, doctrine
+- Key feature: `references_legislation` frontmatter for staleness tracking
 
-Schema name:   law-firm-sr
-Language:      Serbian, Latin + Cyrillic (mixed_script: true)
-Client:        Law firm, Belgrade (beta tester)
-Entities:      client, matter, precedent, doctrine
-Key feature:   references_legislation frontmatter field
-               enables staleness tracking when laws update
+**writing-agency** (v1 — in development)
+- Writing company client intelligence schema
+- Entities: client, voice-document, brief, deliverable, research-note, contributor, performance-record
+- Key feature: outcome tracking loop, cross-client knowledge graph
 
-Law update workflow: client ingests updated legislation →
-ingest creates/updates doctrine page → targeted lint pass
-flags all pages with references_legislation matching the
-updated statute → client reviews flagged pages.
+---
 
-## Development Phases
+## Session Rules
 
-Phase 1 (6 weeks):
-  Config system, schema loader/validator, file parsers
-  (PDF text, DOCX, plain text, markdown), ingest pipeline,
-  git sync automation.
-  Deliverable: `pith ingest file.pdf` produces correct wiki page.
-
-Phase 2 (4 weeks):
-  Query layer (Ollama + Gemma 4), lint pass,
-  `pith init` CLI wizard.
-  Deliverable: full CLI working end-to-end.
-
-Phase 3 (3 weeks):
-  Excel/CSV, PPTX parsers, scanned PDF OCR (pytesseract),
-  law-firm-sr schema v1 tested on real documents.
-  Deliverable: law firm schema working on real legal docs.
-
-Phase 4 (6 weeks):
-  Tauri GUI (setup wizard, dashboard, ingest panel, settings),
-  pyinstaller Windows binary, macOS dmg, Linux AppImage,
-  Lemon Squeezy license system integration.
-  Deliverable: installable product on all three platforms.
-
-Phase 5 (2 weeks):
-  Landing page on pithhq.com, launch prep.
-  Deliverable: public launch.
-
-## Coding Standards
-
-- pathlib.Path for ALL file paths — no exceptions
-- pydantic validation on every config load at startup
-- i18n string table from day one (gettext) — no hardcoded
-  user-facing strings anywhere in the codebase
-- Type hints throughout — no untyped functions
-- Black formatting, ruff linting
-- Tests required for all parsers before merge
-- No hardcoded colors or strings in CLI output —
-  all routed through the output module
-
-## CLI Output Standards
-
-Copper (#B07858): warnings, flagged items
-Sage (#5C8A5A):   success, clean states
-Red:              errors only
-No color:         progress, informational
-
-Format: "N pages updated · N created · N conflicts"
-Never: emoji, exclamation marks, cheerful language
-
-## Key Reminders for Claude Code Sessions
-
-- Schema packs are in a SEPARATE private repo
-- AGENT.md (not CLAUDE.md) is the per-schema LLM instruction file
-- The config format is a public API — no breaking changes
-  without migration scripts
-- Windows path handling requires pathlib.Path — enforce at PR
-- pyinstaller bundles git for Windows — verify in build spec
-- Lemon Squeezy license keys start with `pithhq_`
-- The product is PITH, the org is pithhq, never mix the casing
+1. Read this CLAUDE.md at the start of every session
+2. Check `wiki/` for current development state if it exists
+3. The open core boundary is non-negotiable — never blur it
+4. Privacy constraints are non-negotiable — never compromise them
+5. pathlib.Path everywhere — if you see string path concatenation, fix it
+6. All parsers need tests — no exceptions
+7. Schema packs go in the private repo, never here
