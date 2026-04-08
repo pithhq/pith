@@ -11,7 +11,7 @@ from pathlib import Path
 from pptx import Presentation
 
 from pith.i18n import t
-from pith.parsers.base import ParseError, ParsedDocument, Section, Table
+from pith.parsers.base import ParsedDocument, ParseError, Section, Table
 
 
 def _slide_title(slide: object, index: int) -> str:

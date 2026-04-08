@@ -6,15 +6,14 @@ text fall back to pytesseract OCR on the rendered page image.
 
 from __future__ import annotations
 
+import os
+import platform
 from pathlib import Path
 
 import pdfplumber
 
 from pith.i18n import t
-from pith.parsers.base import ParseError, ParsedDocument, Section, Table
-import os
-import platform
-from pathlib import Path
+from pith.parsers.base import ParsedDocument, ParseError, Section, Table
 
 
 def _set_tessdata_prefix() -> None:

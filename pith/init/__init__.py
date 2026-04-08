@@ -7,6 +7,7 @@ from pathlib import Path
 
 import typer
 
+from pith import output
 from pith.config import (
     AnthropicProvider,
     ModelRef,
@@ -19,7 +20,6 @@ from pith.config import (
 )
 from pith.config.models import ModelProvider
 from pith.i18n import t
-from pith import output
 from pith.init.scheduler import generate
 
 

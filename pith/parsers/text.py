@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 
 from pith.i18n import t
-from pith.parsers.base import ParseError, ParsedDocument, Section
+from pith.parsers.base import ParsedDocument, ParseError, Section
 
 _MD_HEADING_RE = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)
 

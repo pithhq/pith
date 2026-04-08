@@ -6,9 +6,9 @@ import platform
 import shutil
 from pathlib import Path
 
+from pith import output
 from pith.config import PithConfig
 from pith.i18n import t
-from pith import output
 
 
 def _pith_executable() -> str:

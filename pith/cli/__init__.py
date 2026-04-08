@@ -10,9 +10,9 @@ from typing import Optional
 import typer
 from pydantic import ValidationError
 
+from pith import output
 from pith.config import PithConfig, load_config
 from pith.i18n import t
-from pith import output
 
 app = typer.Typer(add_completion=False)
 
@@ -41,7 +41,7 @@ def _load_config(config_path: Path) -> PithConfig:
 @app.command()
 def ingest(
     file: Path = typer.Argument(..., exists=True, readable=True),
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None,
         "--config",
         "-c",
@@ -71,7 +71,7 @@ def ingest(
 @app.command()
 def query(
     text: str = typer.Argument(..., help="Question to ask the wiki."),
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None,
         "--config",
         "-c",
@@ -94,7 +94,7 @@ def query(
 
 @app.command()
 def lint(
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None,
         "--config",
         "-c",
@@ -150,13 +150,13 @@ def export(
         "-f",
         help="Export format: pdf, docx, csv.",
     ),
-    output_path: Optional[Path] = typer.Option(
+    output_path: Path | None = typer.Option(
         None,
         "--output",
         "-o",
         help="Output file path.",
     ),
-    config: Optional[Path] = typer.Option(
+    config: Path | None = typer.Option(
         None,
         "--config",
         "-c",

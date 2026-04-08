@@ -6,7 +6,6 @@ import json
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 
@@ -14,10 +13,10 @@ from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 class VaultConfig(BaseModel):
     """Vault location, schema, and language settings."""
 
-    path: Optional[Path] = None
-    schema_: Optional[str] = Field(None, alias="schema")
-    schema_version: Optional[str] = None
-    language: Optional[str] = None
+    path: Path | None = None
+    schema_: str | None = Field(None, alias="schema")
+    schema_version: str | None = None
+    language: str | None = None
     mixed_script: bool = False
 
 
@@ -132,7 +131,7 @@ class ActiveHours(BaseModel):
 class SyncConfig(BaseModel):
     """Git sync settings."""
 
-    remote: Optional[str] = None
+    remote: str | None = None
     interval_minutes: int = 30
     active_hours: ActiveHours = ActiveHours()
 
@@ -191,16 +190,16 @@ class PrivacyConfig(BaseModel):
 class LicenseConfig(BaseModel):
     """License data — written by ``pith activate``, never by users."""
 
-    key: Optional[str] = None
-    machine_id: Optional[str] = None
-    tier: Optional[str] = None
-    activated_at: Optional[str] = None
+    key: str | None = None
+    machine_id: str | None = None
+    tier: str | None = None
+    activated_at: str | None = None
 
 
 class UIConfig(BaseModel):
     """UI integration settings."""
 
-    obsidian_vault_path: Optional[Path] = None
+    obsidian_vault_path: Path | None = None
     openwebui_port: int = 3000
 
 

@@ -12,9 +12,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from pith import output
 from pith.config import PithConfig
 from pith.i18n import t
-from pith import output
 
 
 class ExportFormat(str, Enum):
@@ -82,8 +82,9 @@ def _collect_pages(vault_path: Path) -> list[WikiPage]:
 
 def _export_pdf(pages: list[WikiPage], output_path: Path, vault_name: str) -> None:
     """Export wiki pages to a single PDF file using fpdf2."""
-    from fpdf import FPDF
     import shutil
+
+    from fpdf import FPDF
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
