@@ -182,5 +182,8 @@ def export(
 @app.command()
 def version() -> None:
     """Print the PITH version."""
-    ver = importlib.metadata.version("pithhq")
+    try:
+        ver = importlib.metadata.version("pithhq")
+    except importlib.metadata.PackageNotFoundError:
+        ver = "0.1.0"
     output.info(f"PITH {ver}")

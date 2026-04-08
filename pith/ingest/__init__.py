@@ -1,6 +1,11 @@
 """Ingest pipeline — parse, chunk, compile, and write wiki pages.
 
 Public interface:
+    SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".xlsx", ".csv", ".pptx", ".txt", ".md"}
+
+    if path.suffix.lower() not in SUPPORTED_EXTENSIONS:
+        error(t("ingest.unsupported_format", suffix=path.suffix))
+        raise typer.Exit(code=1)
     result = await ingest_file(path, config)
 """
 
@@ -76,7 +81,9 @@ def _build_frontmatter(
     ]
     if entity_type:
         lines.append(f"entity_type: {entity_type}")
-    lines.append("references_legislation: []")
+    if schema and schema.default_frontmatter:
+        for key, value in schema.default_frontmatter.items():
+            lines.append(f"{key}: {value}")
     lines.append("---")
     return "\n".join(lines) + "\n"
 
@@ -224,7 +231,8 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
         except httpx.HTTPStatusError as exc:
             error(t("ingest.api_error", index=chunk.index, detail=str(exc)))
             conflicts += 1
-
+    if not config.vault.path:
+        raise PithConfigError(t("error.vault_path_not_configured"))
     vault_path = config.vault.path or Path.cwd()
     page_path = _page_path_for(path, vault_path)
     existed = page_path.exists()

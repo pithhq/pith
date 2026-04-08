@@ -8,7 +8,6 @@
     "devUrl": "http://localhost:1420"
   },
   "app": {
-    "title": "PITH",
     "windows": [
       {
         "title": "PITH",
@@ -22,9 +21,9 @@
   "bundle": {
     "active": true,
     "icon": ["icons/icon.png"],
-    "externalBin": ["binaries/pith"],
+    "externalBin": ["binaries/pith-cli"],
     "targets": "all"
-  },
+},
   "plugins": {
     "shell": {
       "sidecar": true

@@ -36,7 +36,6 @@ class WikiPage:
     references_legislation: str
     body: str
 
-
 def _parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
     """Split a wiki page into frontmatter dict and body text."""
     if not text.startswith("---"):
@@ -84,29 +83,48 @@ def _collect_pages(vault_path: Path) -> list[WikiPage]:
 def _export_pdf(pages: list[WikiPage], output_path: Path, vault_name: str) -> None:
     """Export wiki pages to a single PDF file using fpdf2."""
     from fpdf import FPDF
+    import shutil
 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
 
+    # Load a Unicode font — try system fonts in order of preference
+    _FONT_CANDIDATES = [
+        "/usr/share/fonts/TTF/DejaVuSans.ttf",           # Arch Linux
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",         # Fedora
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", # Ubuntu/Debian
+        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",  # macOS
+        "C:\\Windows\\Fonts\\arial.ttf",                  # Windows
+    ]
+
+    font_path: str | None = None
+    for candidate in _FONT_CANDIDATES:
+        if Path(candidate).exists():
+            font_path = candidate
+            break
+
+    if font_path:
+        pdf.add_font("Unicode", fname=font_path)
+        font_name = "Unicode"
+    else:
+        # TODO: bundle a Unicode font in the build before launch
+        font_name = "Helvetica"
+
     # Metadata page
     pdf.add_page()
-    pdf.set_font("Helvetica", size=20)
+    pdf.set_font(font_name, size=20)
     pdf.cell(0, 12, txt=vault_name, new_x="LMARGIN", new_y="NEXT")
-    pdf.set_font("Helvetica", size=11)
+    pdf.set_font(font_name, size=11)
     export_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     pdf.cell(0, 8, txt=export_date, new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(
-        0, 8,
-        txt=f"{len(pages)} pages",
-        new_x="LMARGIN", new_y="NEXT",
-    )
+    pdf.cell(0, 8, txt=f"{len(pages)} pages", new_x="LMARGIN", new_y="NEXT")
 
     # One section per wiki page
     for page in pages:
         pdf.add_page()
-        pdf.set_font("Helvetica", "B", size=14)
+        pdf.set_font(font_name, size=14)
         pdf.cell(0, 10, txt=page.title, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_font("Helvetica", size=10)
+        pdf.set_font(font_name, size=10)
         for paragraph in page.body.split("\n\n"):
             paragraph = paragraph.strip()
             if paragraph:
@@ -114,7 +132,6 @@ def _export_pdf(pages: list[WikiPage], output_path: Path, vault_name: str) -> No
                 pdf.ln(3)
 
     pdf.output(str(output_path))
-
 
 def _export_docx(pages: list[WikiPage], output_path: Path, vault_name: str) -> None:
     """Export wiki pages to a single DOCX file using python-docx."""
