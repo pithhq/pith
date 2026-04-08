@@ -51,7 +51,9 @@ def parse_docx(path: Path) -> ParsedDocument:
         if _is_heading(style_name):
             # Flush the previous section.
             if body_parts:
-                sections.append(Section(heading=current_heading, body="\n".join(body_parts)))
+                sections.append(
+                    Section(heading=current_heading, body="\n".join(body_parts))
+                    )
                 body_parts = []
             current_heading = para.text.strip()
         else:
@@ -61,7 +63,9 @@ def parse_docx(path: Path) -> ParsedDocument:
 
     # Flush final section.
     if body_parts:
-        sections.append(Section(heading=current_heading, body="\n".join(body_parts)))
+        sections.append(
+            Section(heading=current_heading, body="\n".join(body_parts))
+            )
 
     # Extract tables.
     tables: list[Table] = []

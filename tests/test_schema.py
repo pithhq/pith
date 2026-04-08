@@ -17,7 +17,7 @@ from pith.schema import (
 )
 
 # The submodule at schemas/ contains schemas/law-firm-sr/.
-_SCHEMAS_ROOT = Path(__file__).parent.parent / "schemas" / "schemas"
+_SCHEMAS_ROOT = Path(__file__).parent.parent / "schemas"
 
 
 class TestLoadSchemaLawFirmSr:
@@ -57,7 +57,7 @@ class TestLoadSchemaLawFirmSr:
         assert isinstance(pack.lint, SchemaLintConfig)
         assert "client" in pack.lint.orphan_exempt_entities
         assert "client" in pack.lint.required_cross_references.get("matter", [])
-        assert pack.lint.stale_check.field == "references_legislation"
+        assert pack.lint.stale_check.field_name == "references_legislation"
 
     def test_agent_instructions(self, pack: SchemaPack) -> None:
         assert "entity_type" in pack.agent_instructions

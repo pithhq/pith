@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Internationalisation — all user-facing strings live here.
 
 Usage:

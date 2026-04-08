@@ -69,14 +69,18 @@ def _prompt_ingest_provider() -> ModelProvider:
 
 def _prompt_ingest_model(provider: ModelProvider) -> str:
     """Prompt for ingest model name."""
-    default = "claude-sonnet-4-5-20250929" if provider == ModelProvider.anthropic else "gemma4:latest"
+    default = (
+    "claude-sonnet-4-5-20250929"
+    if provider == ModelProvider.anthropic
+    else "gemma4:latest")
     return typer.prompt(t("init.prompt_ingest_model"), default=default).strip()
 
 
 def _prompt_query_lint_model() -> str:
     """Prompt for query/lint model name (always Ollama)."""
-    return typer.prompt(t("init.prompt_query_lint_model"), default="gemma4:latest").strip()
-
+    return typer.prompt(
+    t("init.prompt_query_lint_model"),
+    default="gemma4:latest").strip()
 
 def _prompt_ollama_url() -> str:
     """Prompt for Ollama base URL."""

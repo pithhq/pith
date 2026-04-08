@@ -37,15 +37,7 @@ def _set_tessdata_prefix() -> None:
         if path.exists():
             os.environ["TESSDATA_PREFIX"] = str(path)
             return
-
-def _ocr_language() -> str:
-    """Determine the pytesseract language hint from config.
-    Tries to load ``pith.config.json`` from the current directory.
-    If the config specifies ``mixed_script: true``, returns
-    ``"srp+srp_latn"`` for Serbian mixed-script support.
-    Otherwise falls back to ``"eng"``.
-    """
-    _LANG_MAP: dict[str, str] = {
+_LANG_MAP: dict[str, str] = {
         "en": "eng",
         "sr": "srp",
         "de": "deu",
@@ -54,6 +46,14 @@ def _ocr_language() -> str:
         "it": "ita",
         "pt": "por",
     }
+def _ocr_language() -> str:
+    """Determine the pytesseract language hint from config.
+    Tries to load ``pith.config.json`` from the current directory.
+    If the config specifies ``mixed_script: true``, returns
+    ``"srp+srp_latn"`` for Serbian mixed-script support.
+    Otherwise falls back to ``"eng"``.
+    """
+
     try:
         from pith.config import load_config
         cfg = load_config(Path("pith.config.json"))

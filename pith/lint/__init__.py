@@ -72,9 +72,6 @@ def _collect_pages(vault_path: Path) -> dict[Path, str]:
 
 def _check_orphans(pages: dict[Path, str]) -> list[Path]:
     """Find pages not referenced by any other page."""
-    # Build set of all page stems (names without extension)
-    page_stems: set[str] = {p.stem for p in pages}
-
     # Collect all referenced names from all pages
     referenced: set[str] = set()
     for raw in pages.values():

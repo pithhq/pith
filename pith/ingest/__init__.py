@@ -20,7 +20,7 @@ import httpx
 from pith.config.models import PithConfig
 from pith.i18n import t
 from pith.ingest.chunker import Chunk, chunk_document
-from pith.output import error, info, success, summary
+from pith.output import error, info, summary
 from pith.parsers import parse
 from pith.schema import SchemaPack, load_schema
 
@@ -81,9 +81,6 @@ def _build_frontmatter(
     ]
     if entity_type:
         lines.append(f"entity_type: {entity_type}")
-    if schema and schema.default_frontmatter:
-        for key, value in schema.default_frontmatter.items():
-            lines.append(f"{key}: {value}")
     lines.append("---")
     return "\n".join(lines) + "\n"
 
@@ -214,7 +211,8 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
     sections: list[str] = []
     conflicts = 0
     total = len(chunks)
-
+    if provider.value == "anthropic" and api_key is None:
+        raise ValueError(t("error.anthropic_key_missing"))
     for chunk in chunks:
         info(t("ingest.chunk_progress", current=chunk.index + 1, total=total))
         try:
@@ -232,8 +230,8 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
             error(t("ingest.api_error", index=chunk.index, detail=str(exc)))
             conflicts += 1
     if not config.vault.path:
-        raise PithConfigError(t("error.vault_path_not_configured"))
-    vault_path = config.vault.path or Path.cwd()
+        raise ValueError(t("error.vault_path_not_configured"))
+    vault_path = config.vault.path
     page_path = _page_path_for(path, vault_path)
     existed = page_path.exists()
 

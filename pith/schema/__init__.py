@@ -11,7 +11,7 @@ Public interface:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from pith.i18n import t
 
-_DEFAULT_SCHEMAS_ROOT = Path(__file__).parent.parent.parent / "schemas" / "schemas"
+_DEFAULT_SCHEMAS_ROOT = Path(__file__).parent.parent.parent / "schemas"
 
 
 # --- Pydantic validation models for schema.yaml ---
@@ -63,7 +63,7 @@ class LegislationConfig(BaseModel):
 class StaleCheck(BaseModel):
     """Staleness check configuration inside lint rules."""
 
-    field: str = ""
+    field_name: str = ""
     source_file: str = ""
 
 

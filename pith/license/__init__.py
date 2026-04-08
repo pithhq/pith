@@ -23,8 +23,8 @@ import httpx
 
 from pith.i18n import t
 
-_LICENSE_SALT = b"pithhq-license-salt-v1"  # TODO: replace with asymmetric signing before launch
-
+# TODO: replace with asymmetric signing before launch
+_LICENSE_SALT = b"pithhq-license-salt-v1"
 _KEY_PREFIX = "pithhq_"
 
 

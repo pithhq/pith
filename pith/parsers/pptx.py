@@ -52,7 +52,7 @@ def parse_pptx(path: Path) -> ParsedDocument:
         body_parts: list[str] = []
         slide_has_text = False
 
-        for shape in slide.shapes:
+        for shape in slide.shapes: # type: ignore[attr-defined]
             # Skip the title shape — it becomes the heading.
             if shape is slide.shapes.title:
                 if shape.has_text_frame:

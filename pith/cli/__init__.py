@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import importlib.metadata
 from pathlib import Path
-from typing import Optional
 
 import typer
 from pydantic import ValidationError
@@ -175,7 +174,9 @@ def export(
     config_path = config if config is not None else Path("pith.config.json")
     cfg = _load_config(config_path)
 
-    resolved_output = output_path if output_path is not None else Path(f"pith-export.{export_fmt.value}")
+    resolved_output = (
+    output_path if output_path is not None
+    else Path(f"pith-export.{export_fmt.value}"))
     export_wiki(cfg, export_fmt, resolved_output)
 
 

@@ -25,7 +25,9 @@ def _parse_markdown(text: str, path: Path) -> ParsedDocument:
         match = _MD_HEADING_RE.match(line)
         if match:
             if body_parts:
-                sections.append(Section(heading=current_heading, body="\n".join(body_parts)))
+                sections.append(
+                    Section(heading=current_heading, body="\n".join(body_parts))
+                    )
                 body_parts = []
             current_heading = match.group(2).strip()
         else:

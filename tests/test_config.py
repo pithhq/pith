@@ -34,7 +34,7 @@ def config_file(tmp_path: Path, example_data: dict[str, Any]) -> Path:
 class TestValidConfig:
     def test_load_example_config(self, config_file: Path) -> None:
         cfg = load_config(config_file)
-        assert cfg.models.ingest.provider.value == "anthropic"
+        assert cfg.models.ingest.provider.value == "ollama"
         assert cfg.models.query.provider.value == "ollama"
         assert cfg.models.lint.provider.value == "ollama"
 

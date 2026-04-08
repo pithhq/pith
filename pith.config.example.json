@@ -1,6 +1,6 @@
 {
   "vault": {
-    "path": "/home/sm/Repositories/pithhq/vault",
+    "path": null,
     "language": "en",
     "mixed_script": false
   },
@@ -20,7 +20,7 @@
   },
   "providers": {
     "anthropic": {
-      "api_key_env": ""
+      "api_key_env": "ANTHROPIC_API_KEY"
     },
     "ollama": {
       "base_url": "http://localhost:11434"

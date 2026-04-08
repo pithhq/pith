@@ -6,7 +6,7 @@ and writes a single output file per format.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -79,10 +79,16 @@ def _collect_pages(vault_path: Path) -> list[WikiPage]:
 
     return pages
 
+_FONT_CANDIDATES = [
+    "/usr/share/fonts/TTF/DejaVuSans.ttf",           # Arch Linux
+    "/usr/share/fonts/dejavu/DejaVuSans.ttf",         # Fedora
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", # Ubuntu/Debian
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",  # macOS
+    "C:\\Windows\\Fonts\\arial.ttf",                  # Windows
+]
 
 def _export_pdf(pages: list[WikiPage], output_path: Path, vault_name: str) -> None:
     """Export wiki pages to a single PDF file using fpdf2."""
-    import shutil
 
     from fpdf import FPDF
 
@@ -90,13 +96,6 @@ def _export_pdf(pages: list[WikiPage], output_path: Path, vault_name: str) -> No
     pdf.set_auto_page_break(auto=True, margin=15)
 
     # Load a Unicode font — try system fonts in order of preference
-    _FONT_CANDIDATES = [
-        "/usr/share/fonts/TTF/DejaVuSans.ttf",           # Arch Linux
-        "/usr/share/fonts/dejavu/DejaVuSans.ttf",         # Fedora
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", # Ubuntu/Debian
-        "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",  # macOS
-        "C:\\Windows\\Fonts\\arial.ttf",                  # Windows
-    ]
 
     font_path: str | None = None
     for candidate in _FONT_CANDIDATES:
@@ -114,22 +113,22 @@ def _export_pdf(pages: list[WikiPage], output_path: Path, vault_name: str) -> No
     # Metadata page
     pdf.add_page()
     pdf.set_font(font_name, size=20)
-    pdf.cell(0, 12, txt=vault_name, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 12, text=vault_name, new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(font_name, size=11)
     export_date = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    pdf.cell(0, 8, txt=export_date, new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(0, 8, txt=f"{len(pages)} pages", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, text=export_date, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, text=f"{len(pages)} pages", new_x="LMARGIN", new_y="NEXT")
 
     # One section per wiki page
     for page in pages:
         pdf.add_page()
         pdf.set_font(font_name, size=14)
-        pdf.cell(0, 10, txt=page.title, new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 10, text=page.title, new_x="LMARGIN", new_y="NEXT")
         pdf.set_font(font_name, size=10)
         for paragraph in page.body.split("\n\n"):
             paragraph = paragraph.strip()
             if paragraph:
-                pdf.multi_cell(0, 6, txt=paragraph)
+                pdf.multi_cell(0, 6, text=paragraph)
                 pdf.ln(3)
 
     pdf.output(str(output_path))
