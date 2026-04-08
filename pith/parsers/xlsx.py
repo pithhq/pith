@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from openpyxl import load_workbook
-from openpyxl.utils.exceptions import InvalidFileException
+from openpyxl import load_workbook  # type: ignore[import-untyped]
+from openpyxl.utils.exceptions import (
+    InvalidFileException,  # type: ignore[import-untyped]
+)
 
 from pith.i18n import t
 from pith.parsers.base import ParsedDocument, ParseError, Section, Table

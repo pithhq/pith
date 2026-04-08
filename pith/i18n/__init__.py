@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import gettext
 import os
+from collections.abc import Callable
 from pathlib import Path
 
 _LOCALE_DIR = Path(__file__).parent / "locale"

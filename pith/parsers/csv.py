@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 
 from pith.i18n import t
 from pith.parsers.base import ParsedDocument, ParseError, Section, Table
