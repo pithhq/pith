@@ -23,6 +23,8 @@ _DOMAIN = "pith"
 
 # Attempt to load a compiled translation catalogue.
 # Falls back to the identity function if none is found.
+from collections.abc import Callable
+_gettext: Callable[[str], str]
 try:
     _lang = os.environ.get("PITH_LANG") or os.environ.get("LANG", "en")[:2]
     _translation = gettext.translation(
@@ -31,7 +33,7 @@ try:
         languages=[_lang],
     )
     _translation.install()
-    _gettext = _translation.gettext
+    _gettext = _translation.gettext # type: ignore[assignment]
 except FileNotFoundError:
     _gettext = lambda s: s  # noqa: E731
 

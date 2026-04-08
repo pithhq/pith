@@ -217,6 +217,7 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
         info(t("ingest.chunk_progress", current=chunk.index + 1, total=total))
         try:
             if provider.value == "anthropic":
+                assert api_key is not None  # narrowed: None case raised above
                 section_md = await _call_anthropic(
                     chunk, model, api_key, system_prompt,
                 )

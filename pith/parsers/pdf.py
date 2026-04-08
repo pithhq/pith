@@ -81,7 +81,7 @@ def _ocr_page(page: pdfplumber.pdf.Page) -> str:
         ParseError: If pytesseract is not installed.
     """
     try:
-        import pytesseract
+        import pytesseract  # type: ignore[import-untyped]
     except ImportError:
         raise ParseError(
             Path("<ocr>"),

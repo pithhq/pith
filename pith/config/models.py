@@ -206,7 +206,7 @@ class UIConfig(BaseModel):
 class PithConfig(BaseModel):
     """Root configuration model for pith.config.json."""
 
-    vault: VaultConfig = VaultConfig()
+    vault: VaultConfig = VaultConfig()  # type: ignore[call-arg]
     models: ModelsConfig
     providers: ProvidersConfig = ProvidersConfig()
     ingest: IngestConfig = IngestConfig()

@@ -16,8 +16,8 @@ from pith.parsers.base import ParsedDocument, ParseError, Section, Table
 
 def _slide_title(slide: object, index: int) -> str:
     """Return the slide title text, or a fallback 'Slide N'."""
-    if slide.shapes.title and slide.shapes.title.has_text_frame:
-        text = slide.shapes.title.text_frame.text.strip()
+    if slide.shapes.title and slide.shapes.title.has_text_frame:  # type: ignore[attr-defined]
+        text = slide.shapes.title.text_frame.text.strip() # type: ignore[attr-defined]
         if text:
             return text
     return t("parser.pptx_slide_fallback", n=index)
@@ -52,7 +52,7 @@ def parse_pptx(path: Path) -> ParsedDocument:
         body_parts: list[str] = []
         slide_has_text = False
 
-        for shape in slide.shapes: # type: ignore[attr-defined]
+        for shape in slide.shapes:  # type: ignore[attr-defined] # type: ignore[attr-defined]
             # Skip the title shape — it becomes the heading.
             if shape is slide.shapes.title:
                 if shape.has_text_frame:
