@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import json
-import os
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class VaultConfig(BaseModel):
@@ -20,67 +19,12 @@ class VaultConfig(BaseModel):
     mixed_script: bool = False
 
 
-class ModelProvider(str, Enum):
-    """Supported model providers."""
-
-    anthropic = "anthropic"
-    ollama = "ollama"
-
-
-class ModelRef(BaseModel):
-    """Provider + model pair for a single operation."""
-
-    provider: ModelProvider
-    model: str
-
-
 class ModelsConfig(BaseModel):
-    """Model assignments per operation."""
+    """Model assignments per operation — all routed through ``claude -p``."""
 
-    ingest: ModelRef
-    query: ModelRef
-    lint: ModelRef
-
-
-class AnthropicProvider(BaseModel):
-    """Anthropic provider — stores only the env var name, never the key."""
-
-    api_key_env: str = "ANTHROPIC_API_KEY"
-
-    def resolve_api_key(self) -> str:
-        """Read the API key from the environment.
-
-        Raises:
-            ValueError: If the env var is unset or empty.
-        """
-        value = os.environ.get(self.api_key_env, "")
-        if not value:
-            msg = (
-                f"Environment variable {self.api_key_env!r} is not set. "
-                f"API keys must be provided via environment variables, "
-                f"never in the config file."
-            )
-            raise ValueError(msg)
-        return value
-
-
-class OllamaProvider(BaseModel):
-    """Ollama provider connection settings."""
-
-    base_url: str = "http://localhost:11434"
-
-    @field_validator("base_url")
-    @classmethod
-    def _validate_url(cls, v: str) -> str:
-        HttpUrl(v)
-        return v
-
-
-class ProvidersConfig(BaseModel):
-    """Provider connection details."""
-
-    anthropic: AnthropicProvider = AnthropicProvider()
-    ollama: OllamaProvider = OllamaProvider()
+    ingest: str = "claude-sonnet-4-6"
+    query: str = "claude-sonnet-4-6"
+    lint: str = "claude-sonnet-4-6"
 
 
 class IngestFormat(str, Enum):
@@ -100,6 +44,7 @@ class IngestConfig(BaseModel):
 
     chunk_size_tokens: int = 2048
     overlap_tokens: int = 128
+    max_concurrency: int = 5
     formats: list[IngestFormat] = Field(
         default_factory=lambda: list(IngestFormat),
     )
@@ -117,6 +62,14 @@ class IngestConfig(BaseModel):
     def _overlap_non_negative(cls, v: int) -> int:
         if v < 0:
             msg = "overlap_tokens must be non-negative"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("max_concurrency")
+    @classmethod
+    def _max_concurrency_positive(cls, v: int) -> int:
+        if v < 1:
+            msg = "max_concurrency must be at least 1"
             raise ValueError(msg)
         return v
 
@@ -187,15 +140,6 @@ class PrivacyConfig(BaseModel):
         return self
 
 
-class LicenseConfig(BaseModel):
-    """License data — written by ``pith activate``, never by users."""
-
-    key: str | None = None
-    machine_id: str | None = None
-    tier: str | None = None
-    activated_at: str | None = None
-
-
 class UIConfig(BaseModel):
     """UI integration settings."""
 
@@ -207,13 +151,11 @@ class PithConfig(BaseModel):
     """Root configuration model for pith.config.json."""
 
     vault: VaultConfig = VaultConfig()  # type: ignore[call-arg]
-    models: ModelsConfig
-    providers: ProvidersConfig = ProvidersConfig()
+    models: ModelsConfig = ModelsConfig()
     ingest: IngestConfig = IngestConfig()
     sync: SyncConfig = SyncConfig()
     lint: LintConfig = LintConfig()
     privacy: PrivacyConfig = PrivacyConfig()
-    license: LicenseConfig = Field(default_factory=LicenseConfig, alias="license")
     ui: UIConfig = UIConfig()
 
 

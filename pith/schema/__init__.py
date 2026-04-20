@@ -164,7 +164,13 @@ def load_schema(
         SchemaNotFoundError:    If the schema directory does not exist.
         SchemaValidationError:  If ``schema.yaml`` is missing or invalid.
     """
-    schema_dir = schemas_root / name
+    schema_dir = (schemas_root / name).resolve()
+
+    if not schema_dir.is_relative_to(schemas_root.resolve()):
+        raise SchemaValidationError(
+            name,
+            t("schema.path_escape", name=name),
+        )
 
     if not schema_dir.is_dir():
         raise SchemaNotFoundError(name)

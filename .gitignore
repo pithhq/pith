@@ -53,3 +53,6 @@ src-tauri/binaries/pith.exe
 
 # Tesseract env (developer-specific)
 .env.local
+
+# Private keys (Ed25519 signing)
+*.pem

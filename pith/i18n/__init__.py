@@ -54,6 +54,7 @@ _STRINGS: dict[str, str] = {
     "ingest.api_error":          "API error on chunk {index}: {detail}",
     "ingest.writing_page":       "writing wiki page: {path}",
     "ingest.parse_failed":       "could not parse {path}: {detail}",
+    "ingest.path_escape":        "output path {path} escapes vault {vault}",
 
     # parsers
     "parser.file_not_found":     "file not found: {path}",
@@ -73,6 +74,7 @@ _STRINGS: dict[str, str] = {
     "schema.version_mismatch":   "schema version mismatch: expected {expected}, got {got}",
     "schema.validation_error":   "schema {name} validation failed: {detail}",
     "schema.missing_yaml":       "schema.yaml not found at {path}",
+    "schema.path_escape":        "schema name {name} escapes schemas directory",
 
     # sync
     "sync.no_remote":            "no remote configured — skipping push",
@@ -102,6 +104,8 @@ _STRINGS: dict[str, str] = {
     "license.invalid_key":       "invalid license key format",
     "license.invalid":           "license invalid or expired",
     "license.machine_mismatch":  "license is registered to a different machine",
+    "license.signing_key_missing": "PITH_SIGNING_KEY not set — activation requires a signed license from the PITH team",
+    "license.lemonsqueezy_key_missing": "LEMONSQUEEZY_API_KEY not set — required for license activation",
 
     # init wizard
     "init.welcome":              "PITH setup wizard",
@@ -110,6 +114,7 @@ _STRINGS: dict[str, str] = {
     "init.vault_created":        "created vault directory: {path}",
     "init.vault_not_created":    "vault directory not created — aborting",
     "init.prompt_schema":        "schema name (leave blank for none)",
+    "init.prompt_model": "{label} model name",
     "init.prompt_language":      "language code",
     "init.prompt_mixed_script":  "enable mixed script support?",
     "init.prompt_ingest_provider": "ingest model provider (anthropic/ollama)",
@@ -122,6 +127,8 @@ _STRINGS: dict[str, str] = {
     "init.prompt_sync_interval": "sync interval in minutes",
     "init.config_written":       "wrote {path}",
     "init.example_written":      "wrote {path}",
+    "init.confirm_overwrite":    "config file {path} already exists — overwrite?",
+    "init.overwrite_aborted":    "config not overwritten — keeping existing file",
     "init.complete":             "configuration written to pith.config.json",
     "init.ingest_provider_note": "note: anthropic sends document chunks to Anthropic's API — use ollama to keep all data local",
 
@@ -139,6 +146,10 @@ _STRINGS: dict[str, str] = {
     "export.start":              "exporting wiki to {fmt}",
     "export.complete":           "export written to {path}",
     "export.no_pages":           "no wiki pages found in vault",
+    
+    # errors
+    "error.vault_path_not_configured": "vault path is not configured — run 'pith init' first",
+    "error.anthropic_key_missing": "ANTHROPIC_API_KEY is not set",
 }
 
 

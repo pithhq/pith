@@ -11,15 +11,15 @@ Public interface:
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-import httpx
-
 from pith.config.models import PithConfig
 from pith.i18n import t
 from pith.ingest.chunker import Chunk, chunk_document
+from pith.llm import LLMError, call_claude_async
 from pith.output import error, info, summary
 from pith.parsers import parse
 from pith.schema import SchemaPack, load_schema
@@ -38,7 +38,7 @@ class IngestResult:
         page_path: Path where the wiki page was written.
         created:   True if the page is new.
         updated:   True if an existing page was overwritten.
-        conflicts: Number of chunks that failed API compilation.
+        conflicts: Number of chunks that failed compilation.
     """
 
     page_path: Path
@@ -86,84 +86,17 @@ def _build_frontmatter(
 
 
 def _page_path_for(source: Path, vault_path: Path) -> Path:
-    """Derive the wiki page path from the source file name."""
-    return vault_path / f"{source.stem}.md"
-
-async def _call_ollama(
-    chunk: Chunk,
-    model: str,
-    base_url: str,
-    system_prompt: str = _SYSTEM_PROMPT,
-) -> str:
-    """Send a single chunk to the Ollama chat API.
-
-    Args:
-        chunk:         The text chunk to compile.
-        model:         Model identifier (e.g. gemma4:latest).
-        base_url:      Ollama base URL.
-        system_prompt: System prompt including any schema instructions.
-
-    Returns:
-        The assistant's markdown response text.
+    """Derive the wiki page path from the source file name.
 
     Raises:
-        httpx.HTTPStatusError: On non-2xx responses.
+        ValueError: If the resolved path escapes the vault directory.
     """
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
-            f"{base_url}/api/chat",
-            json={
-                "model": model,
-                "stream": False,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": chunk.text},
-                ],
-            },
+    page_path = (vault_path / f"{source.stem}.md").resolve()
+    if not page_path.is_relative_to(vault_path.resolve()):
+        raise ValueError(
+            t("ingest.path_escape", path=page_path, vault=vault_path),
         )
-        response.raise_for_status()
-        data = response.json()
-        return data["message"]["content"]
-async def _call_anthropic(
-    chunk: Chunk,
-    model: str,
-    api_key: str,
-    system_prompt: str = _SYSTEM_PROMPT,
-) -> str:
-    """Send a single chunk to the Anthropic Messages API.
-
-    Args:
-        chunk:         The text chunk to compile.
-        model:         Model identifier (e.g. claude-sonnet-4-5).
-        api_key:       Resolved API key.
-        system_prompt: System prompt including any schema instructions.
-
-    Returns:
-        The assistant's markdown response text.
-
-    Raises:
-        httpx.HTTPStatusError: On non-2xx responses.
-    """
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json",
-            },
-            json={
-                "model": model,
-                "max_tokens": 4096,
-                "system": system_prompt,
-                "messages": [
-                    {"role": "user", "content": chunk.text},
-                ],
-            },
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data["content"][0]["text"]
+    return page_path
 
 
 async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
@@ -172,7 +105,7 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
     Steps:
         1. Parse the file into a ParsedDocument.
         2. Chunk the document by token count with overlap.
-        3. Send each chunk to the Anthropic API for compilation.
+        3. Send each chunk to Claude Code CLI for compilation.
         4. Assemble responses into a wiki page with YAML frontmatter.
         5. Write the page to the vault directory.
 
@@ -199,37 +132,40 @@ async def ingest_file(path: Path, config: PithConfig) -> IngestResult:
 
     system_prompt = _build_system_prompt(schema_pack)
     entity_type = _infer_entity_type(schema_pack)
+    model = config.models.ingest
 
-    model = config.models.ingest.model
-    provider = config.models.ingest.provider
-    api_key = (
-        config.providers.anthropic.resolve_api_key()
-        if provider.value == "anthropic"
-        else None
-    )
-
-    sections: list[str] = []
-    conflicts = 0
     total = len(chunks)
-    if provider.value == "anthropic" and api_key is None:
-        raise ValueError(t("error.anthropic_key_missing"))
-    for chunk in chunks:
-        info(t("ingest.chunk_progress", current=chunk.index + 1, total=total))
-        try:
-            if provider.value == "anthropic":
-                assert api_key is not None  # narrowed: None case raised above
-                section_md = await _call_anthropic(
-                    chunk, model, api_key, system_prompt,
+    sem = asyncio.Semaphore(config.ingest.max_concurrency)
+    completed = 0
+
+    async def _process_chunk(chunk: Chunk) -> str | None:
+        nonlocal completed
+        async with sem:
+            try:
+                result = await call_claude_async(
+                    chunk.text,
+                    system=system_prompt,
+                    model=model,
                 )
-            else:
-                section_md = await _call_ollama(
-                    chunk, model, config.providers.ollama.base_url,
-                    system_prompt,
-                )
-            sections.append(section_md)
-        except httpx.HTTPStatusError as exc:
-            error(t("ingest.api_error", index=chunk.index, detail=str(exc)))
-            conflicts += 1
+                completed += 1
+                info(t(
+                    "ingest.chunk_progress",
+                    current=completed, total=total,
+                ))
+                return result
+            except LLMError as exc:
+                error(t(
+                    "ingest.api_error",
+                    index=chunk.index, detail=str(exc),
+                ))
+                completed += 1
+                return None
+
+    tasks = [_process_chunk(c) for c in chunks]
+    results = await asyncio.gather(*tasks)
+
+    sections = [r for r in results if r is not None]
+    conflicts = sum(1 for r in results if r is None)
     if not config.vault.path:
         raise ValueError(t("error.vault_path_not_configured"))
     vault_path = config.vault.path

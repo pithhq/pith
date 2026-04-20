@@ -1,14 +1,13 @@
-"""Query pipeline — send questions to the local Ollama model with wiki context."""
+"""Query pipeline — send questions to Claude Code CLI with wiki context."""
 
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
-import httpx
-
 from pith.config.models import PithConfig
 from pith.i18n import t
+from pith.llm import LLMError, call_claude
 from pith.output import info
 
 
@@ -54,8 +53,8 @@ def _build_context(pages: list[str]) -> str:
     return "\n\n".join(combined)
 
 
-async def query_wiki(query: str, config: PithConfig) -> str:
-    """Send *query* to Ollama with wiki pages as context.
+def query_wiki(query: str, config: PithConfig) -> str:
+    """Send *query* to Claude Code CLI with wiki pages as context.
 
     Args:
         query:  The user's natural-language question.
@@ -65,7 +64,7 @@ async def query_wiki(query: str, config: PithConfig) -> str:
         The model's response text.
 
     Raises:
-        QueryError: If Ollama is unreachable or returns a non-2xx status.
+        QueryError: If the CLI call fails.
     """
     vault_path = config.vault.path
     if vault_path is None:
@@ -78,35 +77,14 @@ async def query_wiki(query: str, config: PithConfig) -> str:
     context = _build_context(pages)
     system_message = t("query.system_prompt", context=context)
 
-    base_url = config.providers.ollama.base_url.rstrip("/")
-    url = f"{base_url}/api/chat"
-    payload = {
-        "model": config.models.query.model,
-        "messages": [
-            {"role": "system", "content": system_message},
-            {"role": "user", "content": query},
-        ],
-        "stream": False,
-    }
+    try:
+        answer = call_claude(
+            query,
+            system=system_message,
+            model=config.models.query,
+        )
+    except LLMError as exc:
+        raise QueryError(exc.detail) from exc
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(url, json=payload, timeout=120.0)
-        except httpx.ConnectError as exc:
-            raise QueryError(
-                t("query.ollama_unreachable", url=url, detail=str(exc)),
-            ) from exc
-
-        if response.status_code != 200:
-            raise QueryError(
-                t(
-                    "query.ollama_error",
-                    status=response.status_code,
-                    detail=response.text,
-                ),
-            )
-
-    data = response.json()
-    answer: str = data["message"]["content"]
     info(answer)
     return answer

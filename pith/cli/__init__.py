@@ -16,11 +16,6 @@ from pith.i18n import t
 app = typer.Typer(add_completion=False)
 
 
-# Prefix of the i18n "query.ollama_unreachable" template — used to
-# distinguish connection failures (exit 4) from other QueryErrors (exit 1).
-_OLLAMA_UNREACHABLE_PREFIX = "could not reach Ollama"
-
-
 def _load_config(config_path: Path) -> PithConfig:
     """Load and validate PITH config, handling errors with i18n messages.
 
@@ -61,10 +56,6 @@ def ingest(
     except ParseError as exc:
         output.error(str(exc))
         raise typer.Exit(code=1)
-    except ValueError as exc:
-        # Missing API key raises ValueError from provider.resolve_api_key()
-        output.error(t("config.api_key_missing", var=str(exc)))
-        raise typer.Exit(code=3)
 
 
 @app.command()
@@ -84,11 +75,10 @@ def query(
     from pith.query import QueryError, query_wiki
 
     try:
-        asyncio.run(query_wiki(text, cfg))
+        query_wiki(text, cfg)
     except QueryError as exc:
         output.error(exc.detail)
-        code = 4 if exc.detail.startswith(_OLLAMA_UNREACHABLE_PREFIX) else 1
-        raise typer.Exit(code=code)
+        raise typer.Exit(code=1)
 
 
 @app.command()
@@ -118,27 +108,6 @@ def init() -> None:
     from pith.init import run_wizard
 
     run_wizard()
-
-
-@app.command()
-def activate(
-    key: str = typer.Argument(..., help="License key (pithhq_...)."),
-) -> None:
-    """Activate a PITH license on this machine."""
-    from pith.license import activate as activate_license
-
-    output.info(t("license.activating"))
-
-    try:
-        info = activate_license(key)
-    except ValueError:
-        output.error(t("license.invalid_key"))
-        raise typer.Exit(code=5)
-    except Exception:  # noqa: BLE001
-        output.error(t("license.invalid"))
-        raise typer.Exit(code=5)
-
-    output.success(t("license.activated", tier=info.tier))
 
 
 @app.command()

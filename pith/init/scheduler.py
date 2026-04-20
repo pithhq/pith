@@ -34,6 +34,7 @@ def _write_systemd(config: PithConfig, pith_bin: str) -> None:
         f"ExecStart={pith_bin} sync\n",
         encoding="utf-8",
     )
+    service_path.chmod(0o600)
 
     timer_path = unit_dir / "pith-sync.timer"
     timer_path.write_text(
@@ -48,6 +49,7 @@ def _write_systemd(config: PithConfig, pith_bin: str) -> None:
         "WantedBy=timers.target\n",
         encoding="utf-8",
     )
+    timer_path.chmod(0o600)
 
     output.info(t("init.scheduler_written", path=timer_path))
     output.info(t("init.scheduler_written", path=service_path))
@@ -83,6 +85,7 @@ def _write_launchd(config: PithConfig, pith_bin: str) -> None:
         "</plist>\n",
         encoding="utf-8",
     )
+    plist_path.chmod(0o600)
 
     output.info(t("init.scheduler_written", path=plist_path))
     output.info(t("init.scheduler_load_launchd"))
@@ -130,6 +133,7 @@ def _write_task_scheduler(config: PithConfig, pith_bin: str) -> None:
         "</Task>\n",
         encoding="utf-8",
     )
+    xml_path.chmod(0o600)
 
     output.info(t("init.scheduler_written", path=xml_path))
     output.info(t("init.scheduler_load_windows"))

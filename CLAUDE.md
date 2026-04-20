@@ -4,57 +4,56 @@
 
 Core insight: PITH is NOT RAG. The wiki is a persistent compiled artifact, not a retrieval index. Every ingest makes it richer. The LLM does the bookkeeping humans abandon.
 
+**Status: Personal use only. No commercial launch planned.**
+
 ---
 
 ## Project Context
 
 ```
 Project Name:     PITH
-Type:             desktop CLI tool + Tauri GUI
+Type:             desktop CLI tool
 Track:            software
-Primary Stack:    Python 3.12+, Typer, Pydantic, PyInstaller, Tauri (Rust + Python sidecar)
-Target Platform:  Windows (.exe), macOS (.dmg), Linux (AppImage)
-Current Phase:    Phase 4 complete — production ready
+Primary Stack:    Python 3.12+, Typer, Pydantic
+Target Platform:  Linux (primary), macOS, Windows
+Current Phase:    Personal simplification
 Repository:       github.com/pithhq/pith
-Domain:           pithhq.com
-Email:            hello@pithhq.com
-License:          Apache 2.0 (engine) + Proprietary (schema packs, GUI)
 ```
 
 ---
 
-## Architecture (Locked)
+## Architecture
 
 **Four modular layers:**
 
 1. **Storage**: local filesystem (default), NAS mount, cloud-synced folder
-2. **Model provider**: Ollama (local queries), Anthropic API (ingest synthesis), OpenAI-compatible
+2. **LLM**: all calls route through `claude -p` (Claude Code CLI via Max subscription)
 3. **Schema**: vertical-specific YAML + AGENT.md pairs — the extensible knowledge layer
-4. **Interface**: Obsidian (wiki browsing), Open WebUI (team queries), CLI (power users)
+4. **Interface**: Obsidian (wiki browsing), CLI (power users)
 
-**Model split (locked):**
-- Ingest/synthesis: Claude API — quality matters here
-- Query (day-to-day): Ollama + Gemma 4 — private, zero marginal cost
-- Lint: Ollama + Gemma 4
+**Model layer:**
+- All operations (ingest, query, lint) use `claude -p --model [model]`
+- No API keys needed — routes through Claude Code Max subscription
+- Model per operation is configurable in `pith.config.json`
+- Default: `claude-sonnet-4-6` for all operations
 
 ---
 
-## Tech Stack (Locked)
+## Tech Stack
 
 ```
 Language:           Python 3.12+
 CLI framework:      Typer
 Schema validation:  Pydantic + pydantic-settings
 Config validation:  Pydantic
+LLM interface:      subprocess → claude -p (Claude Code CLI)
 File parsers:       pdfplumber (PDF text)
                     python-docx (DOCX)
                     openpyxl / pandas (Excel/CSV)
                     python-pptx (PPTX)
                     pytesseract (scanned PDF OCR — v1.1)
 Git operations:     gitpython
-API calls:          httpx (async)
 Packaging:          PyInstaller (CLI binary)
-GUI wrapper:        Tauri (Rust + Python sidecar)
 Testing:            pytest + pytest-cov
 Formatting:         Black
 Linting:            ruff
@@ -63,40 +62,18 @@ Type checking:      mypy
 
 ---
 
-## CLI Commands (Stable — Phase 4)
+## CLI Commands
 
 ```bash
 pith init          # Guided setup wizard — creates pith.config.json
 pith ingest [file] # Ingest one or more source files into wiki
-pith query [text]  # Query the wiki using local model
+pith query [text]  # Query the wiki
 pith lint          # Health check: orphans, contradictions, stale refs
 pith sync          # Manual git commit + push
 pith export        # Export wiki to PDF/DOCX/CSV
-pith activate [key]# License activation (Lemon Squeezy)
 ```
 
 All command signatures are stable and locked. Do not change them.
-
----
-
-## Open Core Boundary (Locked)
-
-**Apache 2.0 (open source):**
-- CLI engine (all commands)
-- All file format parsers
-- Git sync layer
-- Model provider abstraction
-- Schema loader and validator
-- AGENT.md template system
-- Frontmatter tracking system
-
-**Proprietary (paid):**
-- Vertical schema packs (law-firm-sr, writing-agency, etc.)
-- GUI installer and setup wizard
-- Obsidian configuration pack
-- Priority support
-
-Schema packs live in a **separate private repository** (`pithhq/pith-schemas`). Never commit schema pack files to the open source repo. Reference via git submodule or package install in the product build.
 
 ---
 
@@ -104,27 +81,18 @@ Schema packs live in a **separate private repository** (`pithhq/pith-schemas`). 
 
 ```json
 {
-  "version": "1.0",
-  "wiki": {
-    "root": "./wiki",
-    "schema": "law-firm-sr"
+  "vault": {
+    "path": "./wiki",
+    "schema": "law-firm-sr",
+    "language": "en"
   },
-  "model": {
-    "ingest": {
-      "provider": "anthropic",
-      "model": "claude-sonnet-4-6"
-    },
-    "query": {
-      "provider": "ollama",
-      "model": "gemma4",
-      "base_url": "http://localhost:11434"
-    }
+  "models": {
+    "ingest": "claude-sonnet-4-6",
+    "query": "claude-sonnet-4-6",
+    "lint": "claude-sonnet-4-6"
   },
   "sync": {
-    "enabled": true,
-    "remote": "origin",
-    "branch": "main",
-    "auto_push": false
+    "interval_minutes": 30
   },
   "privacy": {
     "telemetry": false,
@@ -150,10 +118,9 @@ README.md      — human-readable guide for this vertical
 ## Privacy Constraints (Non-Negotiable)
 
 - No telemetry (zero — never send usage data)
-- No account required (license validation is offline after first activation)
-- API keys in environment variables only — never in config file
+- No account required
+- No API keys in config files — LLM calls go through `claude -p` (no key needed)
 - Update check: single GET to `api.pithhq.com/version`, no user identifier sent, opt-out via config
-- License validation: offline after first activation (machine fingerprint hash)
 
 These constraints are the product's identity. Never compromise them for convenience.
 
@@ -180,14 +147,18 @@ These constraints are the product's identity. Never compromise them for convenie
 
 ---
 
-## License System
+## Planned Integrations
 
-- Provider: Lemon Squeezy (Merchant of Record — handles VAT globally)
-- Tiers: Personal (1 machine), Team (5 machines), Enterprise (unlimited)
-- Validation: offline after first activation
-- Machine fingerprint: hashed hardware ID (never sent externally after activation)
+### Firecrawl (URL ingest)
 
----
+- Purpose: `pith ingest [url]` scrapes clean text via Firecrawl
+  before passing to the ingest pipeline
+- Alternative: direct fetch (no external service) with a --local-fetch flag
+
+### GWS CLI (export channel)
+
+- Purpose: `pith export --channel=gdoc` pushes compiled wiki pages
+  to Google Drive
 
 ## Current Verticals
 
@@ -208,8 +179,6 @@ These constraints are the product's identity. Never compromise them for convenie
 
 1. Read this CLAUDE.md at the start of every session
 2. Check `wiki/` for current development state if it exists
-3. The open core boundary is non-negotiable — never blur it
-4. Privacy constraints are non-negotiable — never compromise them
-5. pathlib.Path everywhere — if you see string path concatenation, fix it
-6. All parsers need tests — no exceptions
-7. Schema packs go in the private repo, never here
+3. Privacy constraints are non-negotiable — never compromise them
+4. pathlib.Path everywhere — if you see string path concatenation, fix it
+5. All parsers need tests — no exceptions

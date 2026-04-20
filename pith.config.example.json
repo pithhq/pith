@@ -1,34 +1,18 @@
 {
   "vault": {
-    "path": null,
+    "path": "/home/sm/wiki/compiled",
     "language": "en",
     "mixed_script": false
   },
   "models": {
-    "ingest": {
-      "provider": "ollama",
-      "model": "gemma4:latest"
-    },
-    "query": {
-      "provider": "ollama",
-      "model": "gemma4:latest"
-    },
-    "lint": {
-      "provider": "ollama",
-      "model": "gemma4:latest"
-    }
-  },
-  "providers": {
-    "anthropic": {
-      "api_key_env": "ANTHROPIC_API_KEY"
-    },
-    "ollama": {
-      "base_url": "http://localhost:11434"
-    }
+    "ingest": "claude-sonnet-4-6",
+    "query": "claude-sonnet-4-6",
+    "lint": "claude-sonnet-4-6"
   },
   "ingest": {
     "chunk_size_tokens": 2048,
     "overlap_tokens": 128,
+    "max_concurrency": 5,
     "formats": [
       "pdf",
       "docx",
@@ -60,7 +44,6 @@
     "telemetry": false,
     "update_check": true
   },
-  "license": {},
   "ui": {
     "openwebui_port": 3000
   }

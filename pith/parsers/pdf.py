@@ -66,13 +66,12 @@ def _ocr_language() -> str:
     return "eng"
 
 
-def _ocr_page(page: pdfplumber.pdf.Page) -> str:
-    _set_tessdata_prefix()
-    image = page.to_image().original
+def _ocr_page(page: pdfplumber.pdf.Page, lang: str = "eng") -> str:
     """Render a page to an image and run pytesseract OCR.
 
     Args:
         page: A pdfplumber page object.
+        lang: Tesseract language hint (resolved once by caller).
 
     Returns:
         Extracted text from OCR.
@@ -80,6 +79,7 @@ def _ocr_page(page: pdfplumber.pdf.Page) -> str:
     Raises:
         ParseError: If pytesseract is not installed.
     """
+    _set_tessdata_prefix()
     try:
         import pytesseract  # type: ignore[import-untyped]
     except ImportError:
@@ -89,7 +89,6 @@ def _ocr_page(page: pdfplumber.pdf.Page) -> str:
         )
 
     image = page.to_image().original
-    lang = _ocr_language()
     return pytesseract.image_to_string(image, lang=lang)
 
 
@@ -121,13 +120,14 @@ def parse_pdf(path: Path) -> ParsedDocument:
     tables: list[Table] = []
     page_count = len(pdf.pages)
     ocr_used = False
+    ocr_lang = _ocr_language()
 
     try:
         for page in pdf.pages:
             text = page.extract_text() or ""
 
             if not text.strip():
-                text = _ocr_page(page)
+                text = _ocr_page(page, lang=ocr_lang)
                 if text.strip():
                     ocr_used = True
 

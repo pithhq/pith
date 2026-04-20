@@ -9,16 +9,11 @@ import typer
 
 from pith import output
 from pith.config import (
-    AnthropicProvider,
-    ModelRef,
     ModelsConfig,
-    OllamaProvider,
     PithConfig,
-    ProvidersConfig,
     SyncConfig,
     VaultConfig,
 )
-from pith.config.models import ModelProvider
 from pith.i18n import t
 from pith.init.scheduler import generate
 
@@ -54,47 +49,11 @@ def _prompt_mixed_script() -> bool:
     return typer.confirm(t("init.prompt_mixed_script"), default=False)
 
 
-def _prompt_ingest_provider() -> ModelProvider:
-    """Prompt for ingest model provider."""
-    output.info(t("init.ingest_provider_note"))
-    raw = typer.prompt(
-        t("init.prompt_ingest_provider"),
-        default="ollama",
-    ).strip().lower()
-    if raw not in ("anthropic", "ollama"):
-        output.error(t("init.invalid_provider", value=raw))
-        raise typer.Exit(code=1)
-    return ModelProvider(raw)
-
-
-def _prompt_ingest_model(provider: ModelProvider) -> str:
-    """Prompt for ingest model name."""
-    default = (
-    "claude-sonnet-4-5-20250929"
-    if provider == ModelProvider.anthropic
-    else "gemma4:latest")
-    return typer.prompt(t("init.prompt_ingest_model"), default=default).strip()
-
-
-def _prompt_query_lint_model() -> str:
-    """Prompt for query/lint model name (always Ollama)."""
+def _prompt_model(label: str) -> str:
+    """Prompt for a model name."""
     return typer.prompt(
-    t("init.prompt_query_lint_model"),
-    default="gemma4:latest").strip()
-
-def _prompt_ollama_url() -> str:
-    """Prompt for Ollama base URL."""
-    return typer.prompt(
-        t("init.prompt_ollama_url"),
-        default="http://localhost:11434",
-    ).strip()
-
-
-def _prompt_api_key_env() -> str:
-    """Prompt for Anthropic API key env var name."""
-    return typer.prompt(
-        t("init.prompt_api_key_env"),
-        default="ANTHROPIC_API_KEY",
+        t("init.prompt_model", label=label),
+        default="claude-sonnet-4-6",
     ).strip()
 
 
@@ -117,11 +76,9 @@ def _build_config(
     schema_name: str | None,
     language: str,
     mixed_script: bool,
-    ingest_provider: ModelProvider,
     ingest_model: str,
-    query_lint_model: str,
-    ollama_url: str,
-    api_key_env: str,
+    query_model: str,
+    lint_model: str,
     git_remote: str | None,
     sync_interval: int,
 ) -> PithConfig:
@@ -134,13 +91,9 @@ def _build_config(
             mixed_script=mixed_script,
         ),
         models=ModelsConfig(
-            ingest=ModelRef(provider=ingest_provider, model=ingest_model),
-            query=ModelRef(provider=ModelProvider.ollama, model=query_lint_model),
-            lint=ModelRef(provider=ModelProvider.ollama, model=query_lint_model),
-        ),
-        providers=ProvidersConfig(
-            anthropic=AnthropicProvider(api_key_env=api_key_env),
-            ollama=OllamaProvider(base_url=ollama_url),
+            ingest=ingest_model,
+            query=query_model,
+            lint=lint_model,
         ),
         sync=SyncConfig(
             remote=git_remote,
@@ -151,22 +104,28 @@ def _build_config(
 
 def _write_config(config: PithConfig) -> None:
     """Write pith.config.json and pith.config.example.json to cwd."""
+    config_path = Path("pith.config.json")
+    if config_path.exists():
+        overwrite = typer.confirm(
+            t("init.confirm_overwrite", path=config_path),
+            default=False,
+        )
+        if not overwrite:
+            output.warning(t("init.overwrite_aborted"))
+            return
+
     data = config.model_dump(mode="json", by_alias=True, exclude_none=True)
 
-    config_path = Path("pith.config.json")
     config_path.write_text(
         json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     output.success(t("init.config_written", path=config_path))
 
-    # Example config — blank out api key env var references
-    example_data = config.model_dump(mode="json", by_alias=True, exclude_none=True)
-    if "providers" in example_data and "anthropic" in example_data["providers"]:
-        example_data["providers"]["anthropic"]["api_key_env"] = ""
+    # Example config
     example_path = Path("pith.config.example.json")
     example_path.write_text(
-        json.dumps(example_data, indent=2, ensure_ascii=False) + "\n",
+        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     output.success(t("init.example_written", path=example_path))
@@ -187,11 +146,9 @@ def run_wizard() -> PithConfig:
     schema_name = _prompt_schema()
     language = _prompt_language()
     mixed_script = _prompt_mixed_script()
-    ingest_provider = _prompt_ingest_provider()
-    ingest_model = _prompt_ingest_model(ingest_provider)
-    query_lint_model = _prompt_query_lint_model()
-    ollama_url = _prompt_ollama_url()
-    api_key_env = _prompt_api_key_env()
+    ingest_model = _prompt_model("ingest")
+    query_model = _prompt_model("query")
+    lint_model = _prompt_model("lint")
     git_remote = _prompt_git_remote()
     sync_interval = _prompt_sync_interval()
 
@@ -200,11 +157,9 @@ def run_wizard() -> PithConfig:
         schema_name=schema_name,
         language=language,
         mixed_script=mixed_script,
-        ingest_provider=ingest_provider,
         ingest_model=ingest_model,
-        query_lint_model=query_lint_model,
-        ollama_url=ollama_url,
-        api_key_env=api_key_env,
+        query_model=query_model,
+        lint_model=lint_model,
         git_remote=git_remote,
         sync_interval=sync_interval,
     )

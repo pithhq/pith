@@ -6,15 +6,16 @@ Public interface:
 
 from __future__ import annotations
 
+import asyncio
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import httpx
 import yaml
 
 from pith.config.models import PithConfig
 from pith.i18n import t
+from pith.llm import LLMError, call_claude_async
 from pith.output import info, success, warning
 
 _FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
@@ -124,49 +125,57 @@ def _candidate_pairs(
     return pairs
 
 
+_MAX_CONTRADICTION_PAIRS = 50
+
+
 async def _check_contradictions(
     pages: dict[Path, str],
     config: PithConfig,
 ) -> list[tuple[Path, Path, str]]:
-    """Send page pairs sharing tags to Ollama for contradiction detection."""
+    """Send page pairs sharing tags to Claude for contradiction detection."""
     pairs = _candidate_pairs(pages)
     if not pairs:
         return []
 
-    base_url = config.providers.ollama.base_url.rstrip("/")
-    url = f"{base_url}/api/chat"
-    model = config.models.lint.model
-    results: list[tuple[Path, Path, str]] = []
+    if len(pairs) > _MAX_CONTRADICTION_PAIRS:
+        pairs = pairs[:_MAX_CONTRADICTION_PAIRS]
 
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        for page_a, page_b in pairs:
-            body_a = _strip_frontmatter(pages[page_a])
-            body_b = _strip_frontmatter(pages[page_b])
-            prompt = _CONTRADICTION_PROMPT.format(page_a=body_a, page_b=body_b)
+    model = config.models.lint
+    sem = asyncio.Semaphore(5)
+    abort = False
 
+    async def _check_pair(
+        page_a: Path,
+        page_b: Path,
+    ) -> tuple[Path, Path, str] | None:
+        nonlocal abort
+        if abort:
+            return None
+        body_a = _strip_frontmatter(pages[page_a])
+        body_b = _strip_frontmatter(pages[page_b])
+        prompt = _CONTRADICTION_PROMPT.format(
+            page_a=body_a, page_b=body_b,
+        )
+
+        async with sem:
             try:
-                response = await client.post(
-                    url,
-                    json={
-                        "model": model,
-                        "messages": [{"role": "user", "content": prompt}],
-                        "stream": False,
-                    },
+                answer = await call_claude_async(
+                    prompt,
+                    model=model,
                 )
-            except httpx.ConnectError:
+            except LLMError:
+                abort = True
                 warning(t("lint.skip_contradictions"))
-                return results
+                return None
 
-            if response.status_code != 200:
-                warning(t("lint.skip_contradictions"))
-                return results
-
-            data = response.json()
-            answer: str = data["message"]["content"].strip()
             if answer.upper() != "NONE":
-                results.append((page_a, page_b, answer))
+                return (page_a, page_b, answer)
+            return None
 
-    return results
+    tasks = [_check_pair(a, b) for a, b in pairs]
+    raw_results = await asyncio.gather(*tasks)
+
+    return [r for r in raw_results if r is not None]
 
 
 # -- Stale references check -------------------------------------------------

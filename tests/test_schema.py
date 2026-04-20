@@ -151,3 +151,27 @@ class TestLoadSchemaMinimal:
         pack = load_schema("with-agent", tmp_path)
 
         assert pack.agent_instructions == "You are an agent.\n"
+
+
+class TestSchemaPathTraversal:
+    """S6 — schema name must not escape schemas directory."""
+
+    def test_dotdot_in_name_rejected(self, tmp_path: Path) -> None:
+        with pytest.raises(SchemaValidationError, match="escapes"):
+            load_schema("../etc/passwd", tmp_path)
+
+    def test_normal_name_allowed(self, tmp_path: Path) -> None:
+        schema_dir = tmp_path / "safe-schema"
+        schema_dir.mkdir()
+        (schema_dir / "schema.yaml").write_text(
+            "schema:\n"
+            "  name: safe-schema\n"
+            "  version: '1.0'\n"
+            "  language: en\n"
+            "entities:\n"
+            "  note:\n"
+            "    description: A note\n",
+            encoding="utf-8",
+        )
+        pack = load_schema("safe-schema", tmp_path)
+        assert pack.name == "safe-schema"

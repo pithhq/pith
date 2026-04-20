@@ -157,9 +157,13 @@ def _export_docx(pages: list[WikiPage], output_path: Path, vault_name: str) -> N
 
 
 def _export_csv(pages: list[WikiPage], output_path: Path) -> None:
-    """Export wiki pages to CSV using pandas."""
-    import pandas as pd
+    """Export wiki pages to CSV using stdlib csv."""
+    import csv
 
+    fieldnames = [
+        "title", "source", "ingested_at", "schema",
+        "references_legislation", "body",
+    ]
     rows = [
         {
             "title": p.title,
@@ -172,8 +176,10 @@ def _export_csv(pages: list[WikiPage], output_path: Path) -> None:
         for p in pages
     ]
 
-    df = pd.DataFrame(rows)
-    df.to_csv(output_path, index=False, encoding="utf-8")
+    with output_path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def export_wiki(
